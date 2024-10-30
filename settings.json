@@ -1,0 +1,16 @@
+{
+  "branches": [
+    "p11",
+    "p10",
+    "p9",
+    "p8"
+  ],
+  "packages": [
+    "gpui",
+    "control",
+    "libdomain",
+    "alterator",
+    "alterator",
+    "admc"
+]
+}
