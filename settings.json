@@ -1,5 +1,6 @@
 {
   "branches": [
+    "sisyphus",
     "p11",
     "p10",
     "p9",
@@ -9,7 +10,6 @@
     "gpui",
     "control",
     "libdomain",
-    "alterator",
     "alterator",
     "admc"
 ]
