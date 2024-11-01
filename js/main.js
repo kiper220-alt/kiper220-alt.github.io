@@ -2,10 +2,12 @@ const apiVersion = "1.19.12";
 const apiVersionMax = "2.0.0"; // Write support in future
 const apiVersionMin = "1.19.12";
 
-const packageFilePath = "settings.json";
+const packageFilePath = "/settings.json";
 const apiVersionJsonFilePath = "https://rdb.altlinux.org/api/version";
 const apiGetPackageInfo = "https://rdb.altlinux.org/api/package/package_info";
 const apiGetPackages = "https://rdb.altlinux.org/api/package/find_packageset"
+
+let settings;
 
 async function checkAndParseJson(responseJson, url)
 {
@@ -59,7 +61,53 @@ async function getPackages(settings) {
     return (await checkAndParseJson(packageList, packageFilePath)).packages;
 }
 
+function arrayAsString(array){
+    if(!array || array.length === 0){
+        return "";
+    }
 
-fetchSettingsJson().then(console.log);
-getApiVersion().then(console.log);
-fetchSettingsJson().then(getPackages).then(console.log);
+    let output = array[0].toString();
+
+    for (let i = 1; i < array.length ; i++){
+        output += `, ${array[i]}`;
+    }
+    return output;
+}
+function compareBranches(a, b)
+{
+    if (a.branch === 'sisyphus')
+    {
+        return -1;
+    }
+    if (b.branch === 'sisyphus')
+    {
+        return 1;
+    }
+    if(a.branch[0] === 'p' && b.branch[0] === 'p')
+    {
+        let cmp = parseInt(b.branch.slice(1)) - parseInt(a.branch.slice(1));
+        if (!isNaN(cmp))
+        {
+            return cmp;
+        }
+    }
+    return a.branch.localeCompare(b.branch);
+}
+
+function addToTable(packages)
+{
+    let packagesDOMs = document.getElementsByClassName("packages");
+    let packagesSettings = [...new Set(settings.packages)];
+
+    for (const packageEl of packagesSettings) {
+        const tmp = genRow(packages, packageEl);
+
+        for (let packagesDOM of packagesDOMs) {
+
+            packagesDOM.appendChild(tmp);
+        }
+    }
+    return packages;
+}
+
+fetchSettingsJson().then(a => settings = a).then(getPackages).then(addToTable);

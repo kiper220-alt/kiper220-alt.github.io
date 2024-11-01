@@ -15,7 +15,7 @@ body {
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 16px;
+  padding: 10px calc(50vw - 550px);
 }
 .navbar > .navbar-brand {
   display: flex;
@@ -23,11 +23,11 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
+  margin-left: 16px;
 }
 .navbar > .navbar-brand > .logo {
   display: block;
   box-sizing: border-box;
-  max-height: 62px;
 }
 .navbar > .navbar-brand > .navbar-brand-text {
   display: block;
@@ -42,5 +42,94 @@ body {
   margin-right: 16px;
   font-size: 16px;
   line-height: 20.8px;
+}
+.packages {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(550px, auto));
+  grid-auto-rows: max-content;
+  grid-gap: 16px;
+  justify-content: center;
+  overflow: hidden;
+  list-style: none;
+  max-width: 100%;
+  padding: 16px;
+}
+@media screen and (max-width: 550px) {
+  .packages {
+    grid-template-columns: 1fr;
+  }
+}
+.packages > .package {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+.packages > .package > .package-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: 1em;
+  padding: 5px 25px;
+  background: linear-gradient(to right bottom, #FFCC00, #F87906);
+  transition: border-radius 0.5s;
+}
+.packages > .package > .package-header > * {
+  color: white;
+}
+.packages > .package > .package-header > .sisyphus-version:before {
+  content: "Sisyphus: ";
+}
+.packages > .package > .drop-down {
+  border: 0;
+  padding: 0;
+  height: 0;
+  overflow: hidden;
+  transition: height 0.5s;
+}
+.packages > .package > .drop-down > .package-table {
+  border-collapse: collapse;
+  border: none;
+  width: 100%;
+  overflow: scroll;
+}
+.packages > .package > .drop-down > .package-table > thead {
+  text-align: center;
+  border-spacing: 0;
+}
+.packages > .package > .drop-down > .package-table > thead > tr > th {
+  padding: 7px;
+  background-color: #F87906;
+  color: white;
+  font-weight: 400;
+}
+.packages > .package > .drop-down > .package-table > tbody > tr > td {
+  padding: 7px;
+  font-weight: 400;
+}
+.packages .package-expanded > .package-header {
+  border-radius: 1em 1em 0 0;
+}
+.packages .package-expanded > .drop-down {
+  box-sizing: border-box;
+  border: solid 5px transparent;
+  border-image: linear-gradient(to right top, #FFCC00, #F87906) 1;
+  height: 100%;
+}
+.banner {
+  display: flex;
+  align-items: flex-end;
+  box-sizing: border-box;
+  min-height: 100px;
+  height: calc(45vh);
+  justify-content: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  font-size: xx-large;
+  padding-bottom: min(10vh, 100px);
 }
 /*# sourceMappingURL=main.css.map */
