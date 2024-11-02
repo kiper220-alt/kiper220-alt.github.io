@@ -4,13 +4,24 @@
     "p11",
     "p10",
     "p9",
-    "p8"
+    "c9f2",
+    "c10f1",
+    "c10f2"
   ],
   "packages": [
     "gpui",
-    "control",
+    "local-policy",
     "libdomain",
-    "alterator",
-    "admc"
+    "admc",
+    "gpupdate",
+    "samba",
+    "sssd",
+    "freeipa",
+    "alterator-auth",
+    "alterator-manager",
+    "alterator-module-executor",
+    "alterator-explorer",
+    "alteratorctl",
+    "adt"
 ]
 }
