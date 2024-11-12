@@ -1,38 +1,24 @@
-function genRow(packages, packageName){
-    const packageByName = packages
-        .filter(p => p.sourcepkgname === packageName || p.packages.includes(packageName))
-        .sort(compareBranches);
-    const sisyphusBranch = packageByName.find(p => p.branch === "sisyphus");
-    let sisyphusVersion = "-";
-
-    if(sisyphusBranch !== undefined){
-        sisyphusVersion = sisyphusBranch.version;
-    }
-
+function genRow(packages, branchName){
     let generated = "            <div class=\"package-header\">\n" +
-        `                <p class=\"name\">${packageName}</p>\n` +
-        `                <p class="sisyphus-version">${sisyphusVersion}</p> <!--▼-->\n` +
+        `                <p class=\"name\">${branchName}</p>\n` +
         "            </div>\n" +
         "            <div class=\"drop-down\">\n" +
         "                <table class=\"package-table\">\n" +
         "                    <thead>\n" +
         "                        <tr>\n" +
-        "                            <th>Ветка</th>\n" +
+        "                            <th>Пакет</th>\n" +
         "                            <th>Версия</th>\n" +
         "                            <th>Дата сборки</th>\n" +
-        "                            <th>Архитектура</th>\n" +
-        "                            <th>Пакеты</th>\n" +
         "                        </tr>\n" +
         "                    </thead>\n" +
         "                        <tbody>"
 
-    for (const packageEl of packageByName) {
+    for (const packageEl of packages) {
+        console.log(packageEl);
         generated += "<tr>\n" +
-            `                                <td>${packageEl.branch}</td>\n` +
+            `                                <td>${packageEl.sourcepkgname}</td>\n` +
             `                                <td>${packageEl.version}</td>\n` +
             `                                <td>${packageEl.buildtime}</td>\n` +
-            `                                <td>${arrayAsString(packageEl.archs)}</td>\n` +
-            `                                <td>${arrayAsString(packageEl.packages)}</td>\n` +
             "                            </tr>"
     }
 

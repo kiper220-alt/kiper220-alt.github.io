@@ -73,41 +73,39 @@ function arrayAsString(array){
     }
     return output;
 }
-function compareBranches(a, b)
+
+function packageByBranch(packages)
 {
-    if (a.branch === 'sisyphus')
+    let map = new Map();
+
+    for (const branch of settings.branches)
     {
-        return -1;
+        map.set(branch, []);
     }
-    if (b.branch === 'sisyphus')
-    {
-        return 1;
+
+    for (let packageEl of packages) {
+        map.set(packageEl.branch, [...map.get(packageEl.branch), packageEl].sort((a,b) => {
+            return a.sourcepkgname.localeCompare(b.sourcepkgname);
+        }));
     }
-    if(a.branch[0] === 'p' && b.branch[0] === 'p')
-    {
-        let cmp = parseInt(b.branch.slice(1)) - parseInt(a.branch.slice(1));
-        if (!isNaN(cmp))
-        {
-            return cmp;
-        }
-    }
-    return a.branch.localeCompare(b.branch);
+
+    return map;
 }
 
-function addToTable(packages)
+function genTable(packages)
 {
     let packagesDOMs = document.getElementsByClassName("packages");
-    let packagesSettings = [...new Set(settings.packages)];
+    let pbb = packageByBranch(packages);
 
-    for (const packageEl of packagesSettings) {
-        const tmp = genRow(packages, packageEl);
-
-        for (let packagesDOM of packagesDOMs) {
-
-            packagesDOM.appendChild(tmp);
-        }
+    for (let packagesDOM of packagesDOMs) {
+        pbb.forEach((value, key) => {
+            let tmp = genRow(value, key);
+            packagesDOM.append(tmp);
+        });
     }
+
     return packages;
 }
 
-fetchSettingsJson().then(a => settings = a).then(getPackages).then(addToTable);
+
+fetchSettingsJson().then(a => settings = a).then(getPackages).then(genTable);
