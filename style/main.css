@@ -120,16 +120,3 @@ body {
   border-image: linear-gradient(to right top, #FFCC00, #F87906) 1;
   height: 100%;
 }
-.banner {
-  display: flex;
-  align-items: flex-end;
-  box-sizing: border-box;
-  min-height: 100px;
-  height: calc(45vh);
-  justify-content: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  font-size: xx-large;
-  padding-bottom: min(10vh, 100px);
-}
-/*# sourceMappingURL=main.css.map */
