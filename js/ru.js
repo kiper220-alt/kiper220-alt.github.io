@@ -14,7 +14,6 @@ function genRow(packages, branchName){
         "                        <tbody>"
 
     for (const packageEl of packages) {
-        console.log(packageEl);
         generated += "<tr>\n" +
         `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.sourcepkgname}</a></td>\n` +
         `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
