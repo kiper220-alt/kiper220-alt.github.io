@@ -107,5 +107,30 @@ function genTable(packages)
     return packages;
 }
 
+function genCheckboxes(branches)
+{
+    let navbarDOMs = document.getElementsByClassName("navbar-brand")[0];
 
-fetchSettingsJson().then(a => settings = a).then(getPackages).then(genTable);
+    for (let branch of branches)
+    {
+        let label = document.createElement('label');
+        label.classList.add("checkbox-btn");
+        label.innerHTML = 
+                `<input type="checkbox" value="false" onchange="branchVisible(this.checked, '${branch}')" checked/>` +
+                `<span>${branch}</span>`;
+        navbarDOMs.append(label);
+    }
+}
+
+function branchVisible(visibility, branch)
+{
+    let package = document.getElementById(`branch-${branch}`);
+    if (visibility)
+    {
+        package.classList.remove("hidden");
+        return;
+    }
+    package.classList.add("hidden");
+}
+
+fetchSettingsJson().then(a => settings = a).then(getPackages).then(genTable).then( a => {genCheckboxes(settings.branches)});

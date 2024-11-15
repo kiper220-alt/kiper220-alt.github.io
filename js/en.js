@@ -28,6 +28,7 @@ function genRow(packages, branchName){
     let el = document.createElement('li')
     el.classList.add('package');
     el.classList.add('package-expanded');
+    el.id = `branch-${packages[0].branch}`;
     el.innerHTML = generated;
     return el;
 }
