@@ -25,12 +25,12 @@ async function checkAndParseJson(responseJson, url)
 }
 
 async function fetchSettingsJson() {
-    const packageList = await fetch(packageFilePath);
+    const packageList = await fetch(packageFilePath, {cache: "no-cache"});
     return await checkAndParseJson(packageList, packageFilePath);
 }
 
 async function getApiVersion(){
-    const version = await fetch(apiVersionJsonFilePath);
+    const version = await fetch(apiVersionJsonFilePath, {cache: "no-cache"});
     return (await checkAndParseJson(version, apiVersionJsonFilePath)).version;
 }
 
@@ -57,7 +57,7 @@ async function getPackages(settings) {
         }
     }
 
-    packageList = await fetch(request);
+    packageList = await fetch(request, {cache: "no-cache"});
     return (await checkAndParseJson(packageList, packageFilePath)).packages;
 }
 
