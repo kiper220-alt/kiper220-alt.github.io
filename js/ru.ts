@@ -8,8 +8,8 @@ function genRow(packages: Package[], branchName: string){
         "                    <thead>\n" +
         "                        <tr>\n" +
         "                            <th>Пакет</th>\n" +
-        "                            <th>Версия</th>\n" +
         "                            <th>Дата сборки</th>\n" +
+        "                            <th>Версия</th>\n" +
         "                        </tr>\n" +
         "                    </thead>\n" +
         "                        <tbody>"
@@ -20,16 +20,16 @@ function genRow(packages: Package[], branchName: string){
         {
             generated += "<tr>\n" +
                 `                                <td><a class="muted" href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.sourcepkgname}</a></td>\n` +
-                `                                <td><a class="muted" href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
                 `                                <td><a class="muted" href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.buildtime}</a></td>\n` +
+                `                                <td><a class="muted" href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
                 "                            </tr>"
         }
         else
         {
             generated += "<tr>\n" +
                 `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.sourcepkgname}</a></td>\n` +
-                `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
                 `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.buildtime}</a></td>\n` +
+                `                                <td><a href="https://packages.altlinux.org/ru/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
                 "                            </tr>"
         }
     }
