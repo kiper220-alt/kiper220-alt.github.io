@@ -1,5 +1,6 @@
+
 // @ts-ignore
-function genRow(packages, branchName) {
+function genRow(packages: Package[], branchName: string){
     let generated = "            <div class=\"package-header\">\n" +
         `                <p class=\"name\">${branchName}</p>\n` +
         "            </div>\n" +
@@ -12,22 +13,24 @@ function genRow(packages, branchName) {
         "                            <th>Build date</th>\n" +
         "                        </tr>\n" +
         "                    </thead>\n" +
-        "                        <tbody>";
+        "                        <tbody>"
+
     for (const packageEl of packages) {
         generated += "<tr>\n" +
             `                                <td><a href="https://packages.altlinux.org/en/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.sourcepkgname}</a></td>\n` +
             `                                <td><a href="https://packages.altlinux.org/en/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.version}</a></td>\n` +
             `                                <td><a href="https://packages.altlinux.org/en/${packageEl.branch}/srpms/${packageEl.sourcepkgname}/" target="_blank">${packageEl.buildtime}</a></td>\n` +
-            "                            </tr>";
+            "                            </tr>"
     }
+
     generated += "</tbody>\n" +
         "                </table>\n" +
         "            </div>\n";
-    let el = document.createElement('li');
+
+    let el = document.createElement('li')
     el.classList.add('package');
     el.classList.add('package-expanded');
     el.id = `branch-${packages[0].branch}`;
     el.innerHTML = generated;
     return el;
 }
-//# sourceMappingURL=en.js.map

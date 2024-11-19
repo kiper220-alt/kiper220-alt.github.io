@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "commonjs",
+    "lib": ["es5", "es6", "dom", "dom.iterable"],
+    "allowJs": true,
+    "jsx": "react",
+    "sourceMap": true,
+    "rootDir": "./client",
+    "downlevelIteration": true
+  }
+}
