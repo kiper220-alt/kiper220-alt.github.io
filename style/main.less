@@ -108,18 +108,34 @@ body {
           text-align: center;
           border-spacing: 0;
 
-          -webkit-box-shadow: 0px 0px 5px 9px rgba(12, 14, 15, 0.1);
-          -moz-box-shadow: 0px 0px 5px 9px rgba(12, 14, 15, 0.1);
-          box-shadow: 0px 0px 6px 9px rgba(12, 14, 15, 0.1);
-          &>tr>th {
+          -webkit-box-shadow: 0px 0px 5px 5px rgba(12, 14, 15, 0.15);
+          -moz-box-shadow: 0px 0px 5px 5px rgba(12, 14, 15, 0.15);
+          box-shadow: 0px 0px 5px 5px rgba(12, 14, 15, 0.15);
+
+          & > tr > th {
             padding: 7px;
             color: white;
             font-weight: 400;
           }
         }
-        &>tbody>tr>td {
-          padding: 7px;
-          font-weight: 400;
+
+        & > tbody > tr {
+          transition: box-shadow 0.25s;
+
+          & > td {
+            font-weight: 400;
+            &>* {
+              display: block;
+              padding: 7px;
+              width: 100%;
+            }
+          }
+
+          &:hover {
+            -webkit-box-shadow: 0px 0px 5px 9px rgba(12, 14, 15, 0.15);
+            -moz-box-shadow: 0px 0px 5px 9px rgba(12, 14, 15, 0.15);
+            box-shadow: 0px 0px 5px 9px rgba(12, 14, 15, 0.15);
+          }
         }
       }
     }
