@@ -23,15 +23,15 @@ class RDBVersion {
 // @ts-ignore
 class Package {
     constructor() {
-        this.branch = "";
-        this.pkgset_datetime = "";
-        this.sourcepkgname = "";
+        this.branch = "-";
+        this.pkgset_datetime = "-";
+        this.sourcepkgname = "-";
         this.packages = [];
-        this.version = "";
-        this.release = "";
-        this.disttag = "";
-        this.packager_email = "";
-        this.buildtime = "";
+        this.version = "-";
+        this.release = "-";
+        this.disttag = "-";
+        this.packager_email = "-";
+        this.buildtime = "-";
         this.archs = [];
     }
 }
@@ -48,6 +48,7 @@ const packageFilePath = "/settings.json";
 const apiVersionJsonFilePath = "https://rdb.altlinux.org/api/version";
 const apiGetPackageInfo = "https://rdb.altlinux.org/api/package/package_info";
 const apiGetPackages = "https://rdb.altlinux.org/api/package/find_packageset";
+let settings;
 function checkAndParseJson(responseJson, url) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!responseJson.ok) {
@@ -63,7 +64,11 @@ function checkAndParseJson(responseJson, url) {
 function fetchSettingsJson() {
     return __awaiter(this, void 0, void 0, function* () {
         const settings = yield fetch(packageFilePath, { cache: "no-cache" });
-        return yield checkAndParseJson(settings, packageFilePath);
+        let result = yield checkAndParseJson(settings, packageFilePath);
+        result.packages = result.packages.sort((a, b) => {
+            return a.localeCompare(b);
+        });
+        return result;
     });
 }
 function getApiVersion() {
@@ -95,26 +100,42 @@ function packageByBranch(packages) {
             map.set(packageEl.branch, [packageEl]);
         }
         else {
-            map.set(packageEl.branch, [...curr, packageEl].sort((a, b) => {
-                return a.sourcepkgname.localeCompare(b.sourcepkgname);
-            }));
+            map.set(packageEl.branch, [...curr, packageEl]);
         }
     }
     return map;
 }
+function fillMissingPackages(target) {
+    let result = [];
+    console.log(settings);
+    for (let branch of settings.branches) {
+        for (let packageEl of settings.packages) {
+            let config = target.find(a => {
+                return a.sourcepkgname == packageEl && a.branch == branch;
+            });
+            if (!config) {
+                config = new Package();
+                config.sourcepkgname = packageEl;
+                config.branch = branch;
+            }
+            result = [config, ...result];
+        }
+    }
+    return result;
+}
 function genTable(packages) {
     let packagesDOM = document.getElementsByClassName("packages");
     for (let packageDOM of packagesDOM) {
-        packages.forEach((packages, branch) => {
-            let tmp = genRow(packages, branch);
+        for (let branch of settings.branches) {
+            let tmp = genRow(packages.get(branch), branch);
             packageDOM.append(tmp);
-        });
+        }
     }
     return packages;
 }
 function genCheckboxes(branches) {
     let navbarDOM = document.getElementsByClassName("navbar-brand")[0];
-    for (let branch of branches) {
+    for (let branch of branches.slice().reverse()) {
         let label = document.createElement("label");
         label.classList.add("checkbox-btn");
         label.innerHTML =
@@ -136,7 +157,9 @@ function branchVisible(visibility, branch) {
     packageDOM.classList.add("hidden");
 }
 fetchSettingsJson()
+    .then(a => settings = a)
     .then(a => getPackages(a.packages, a.branches))
+    .then(fillMissingPackages)
     .then(a => genTable(packageByBranch(a)))
     .then(a => genCheckboxes(Array.from(a.keys())));
 //# sourceMappingURL=main.js.map
