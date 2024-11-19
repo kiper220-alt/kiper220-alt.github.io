@@ -1,32 +1,44 @@
 class Settings {
     branches: string[] = [];
     packages: string[] = [];
+
+    constructor() {
+    }
 }
 
 class RDBVersion {
     name: string = "noname";
     version: string = "0.0.0";
     description: string = "version";
+
+    constructor() {
+    }
 }
 
 // @ts-ignore
 class Package {
-    branch: string = "";
-    pkgset_datetime: string = "";
-    sourcepkgname: string = "";
+    branch: string = "-";
+    pkgset_datetime: string = "-";
+    sourcepkgname: string = "-";
     packages: string[] = [];
-    version: string = "";
-    release: string = "";
-    disttag: string = "";
-    packager_email: string = "";
-    buildtime: string = "";
+    version: string = "-";
+    release: string = "-";
+    disttag: string = "-";
+    packager_email: string = "-";
+    buildtime: string = "-";
     archs: string[] = [];
+
+    constructor() {
+    }
 }
 
 class PackageSet {
     request_args: any;
     length: number = 0;
     packages: Package[] = [];
+
+    constructor() {
+    }
 }
 
 const apiVersion: string = "1.19.12";
@@ -37,6 +49,8 @@ const packageFilePath: string = "/settings.json";
 const apiVersionJsonFilePath: string = "https://rdb.altlinux.org/api/version";
 const apiGetPackageInfo: string = "https://rdb.altlinux.org/api/package/package_info";
 const apiGetPackages: string = "https://rdb.altlinux.org/api/package/find_packageset"
+
+let settings: Settings;
 
 async function checkAndParseJson<Target>(responseJson : Response, url : string) : Promise<Target>
 {
@@ -53,11 +67,15 @@ async function checkAndParseJson<Target>(responseJson : Response, url : string) 
     return await responseJson.json();
 }
 
-declare function genRow(packages : Package[], branchName : string): HTMLElement;
-
 async function fetchSettingsJson() : Promise<Settings> {
     const settings : Response = await fetch(packageFilePath, {cache: "no-cache"});
-    return await checkAndParseJson<Settings>(settings, packageFilePath);
+    let result = await checkAndParseJson<Settings>(settings, packageFilePath);
+
+    result.packages = result.packages.sort((a: string,b : string) => {
+        return a.localeCompare(b);
+    });
+
+    return result;
 }
 
 async function getApiVersion() : Promise<string> {
@@ -94,13 +112,34 @@ function packageByBranch(packages: Package[]) : Map<string, Package[]>
         }
         else
         {
-            map.set(packageEl.branch, [...curr, packageEl].sort((a: Package,b : Package) => {
-                return a.sourcepkgname.localeCompare(b.sourcepkgname);
-            }));
+            map.set(packageEl.branch, [...curr, packageEl]);
         }
     }
 
     return map;
+}
+function fillMissingPackages(target: Package[]): Package[]
+{
+    let result: Package[] = [];
+    console.log(settings);
+    for (let branch of settings.branches)
+    {
+        for (let packageEl of settings.packages)
+        {
+            let config: Package = target.find(a => {
+                return a.sourcepkgname == packageEl && a.branch == branch;
+            });
+
+            if (!config)
+            {
+                config = new Package();
+                config.sourcepkgname = packageEl;
+                config.branch = branch;
+            }
+            result = [config, ...result];
+        }
+    }
+    return result;
 }
 
 function genTable(packages: Map<string, Package[]>)
@@ -108,10 +147,11 @@ function genTable(packages: Map<string, Package[]>)
     let packagesDOM = document.getElementsByClassName("packages");
 
     for (let packageDOM of packagesDOM) {
-        packages.forEach((packages, branch) => {
-            let tmp = genRow(packages, branch);
+        for (let branch of settings.branches)
+        {
+            let tmp = genRow(packages.get(branch), branch);
             packageDOM.append(tmp);
-        });
+        }
     }
 
     return packages;
@@ -121,7 +161,7 @@ function genCheckboxes(branches : string[])
 {
     let navbarDOM = document.getElementsByClassName("navbar-brand")[0];
 
-    for (let branch of branches)
+    for (let branch of branches.slice().reverse())
     {
         let label = document.createElement("label");
         label.classList.add("checkbox-btn");
@@ -149,6 +189,8 @@ function branchVisible(visibility : boolean, branch : string)
 }
 
 fetchSettingsJson()
+    .then(a => settings = a)
     .then(a => getPackages(a.packages, a.branches))
+    .then(fillMissingPackages)
     .then(a => genTable(packageByBranch(a)))
     .then(a => genCheckboxes(Array.from(a.keys())));
