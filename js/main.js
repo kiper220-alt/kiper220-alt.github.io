@@ -13,6 +13,12 @@ class Settings {
         this.packages = [];
     }
 }
+class SettingsFile {
+    constructor() {
+        this.default = "";
+        this.configurations = new Map;
+    }
+}
 class RDBVersion {
     constructor() {
         this.name = "noname";
@@ -48,6 +54,7 @@ const packageFilePath = "/settings.json";
 const apiVersionJsonFilePath = "https://rdb.altlinux.org/api/version";
 const apiGetPackageInfo = "https://rdb.altlinux.org/api/package/package_info";
 const apiGetPackages = "https://rdb.altlinux.org/api/package/find_packageset";
+const currentConfig = (new URLSearchParams(document.location.search)).get("cur_conf");
 let settings;
 function checkAndParseJson(responseJson, url) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -64,9 +71,19 @@ function checkAndParseJson(responseJson, url) {
 function fetchSettingsJson() {
     return __awaiter(this, void 0, void 0, function* () {
         const settings = yield fetch(packageFilePath, { cache: "no-cache" });
-        let result = yield checkAndParseJson(settings, packageFilePath);
+        let file = yield checkAndParseJson(settings, packageFilePath);
+        let result = undefined;
+        if (currentConfig !== undefined) {
+            result = file.configurations[currentConfig];
+        }
+        if (result === undefined) {
+            result = file.configurations[file.default];
+            if (result === undefined) {
+                throw new EvalError("cannot get `default` configuration. Invalid `settings.json`");
+            }
+        }
         result.packages = result.packages.sort((a, b) => {
-            return a.localeCompare(b);
+            return -a.localeCompare(b);
         });
         return result;
     });

@@ -6,7 +6,10 @@
     "allowJs": true,
     "jsx": "react",
     "sourceMap": true,
-    "rootDir": "./client",
+    "rootDir": "./",
+    "outDir": "./",
     "downlevelIteration": true
-  }
+  },
+  "include": ["./*.ts"],
+  "exclude": ["./*.js"],
 }

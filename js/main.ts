@@ -6,6 +6,11 @@ class Settings {
     }
 }
 
+class SettingsFile {
+    default: string = "";
+    configurations: Map<string, Settings> = new Map<string, Settings>;
+}
+
 class RDBVersion {
     name: string = "noname";
     version: string = "0.0.0";
@@ -50,6 +55,8 @@ const apiVersionJsonFilePath: string = "https://rdb.altlinux.org/api/version";
 const apiGetPackageInfo: string = "https://rdb.altlinux.org/api/package/package_info";
 const apiGetPackages: string = "https://rdb.altlinux.org/api/package/find_packageset"
 
+const currentConfig: string | undefined = (new URLSearchParams(document.location.search)).get("cur_conf");
+
 let settings: Settings;
 
 async function checkAndParseJson<Target>(responseJson : Response, url : string) : Promise<Target>
@@ -69,10 +76,25 @@ async function checkAndParseJson<Target>(responseJson : Response, url : string) 
 
 async function fetchSettingsJson() : Promise<Settings> {
     const settings : Response = await fetch(packageFilePath, {cache: "no-cache"});
-    let result = await checkAndParseJson<Settings>(settings, packageFilePath);
+    let file = await checkAndParseJson<SettingsFile>(settings, packageFilePath);
+    let result: Settings | undefined = undefined;
+
+    if (currentConfig !== undefined)
+    {
+        result = file.configurations[currentConfig];
+    }
+    if (result === undefined)
+    {
+        result = file.configurations[file.default]
+        
+        if (result === undefined)
+        {
+            throw new EvalError("cannot get `default` configuration. Invalid `settings.json`");
+        }
+    }
 
     result.packages = result.packages.sort((a: string,b : string) => {
-        return a.localeCompare(b);
+        return -a.localeCompare(b);
     });
 
     return result;
