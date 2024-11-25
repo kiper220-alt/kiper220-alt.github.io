@@ -1,27 +1,65 @@
 {
-  "branches": [
-    "sisyphus",
-    "p11",
-    "p10",
-    "p9",
-    "c10f2",
-    "c10f1",
-    "c9f2"
-  ],
-  "packages": [
-    "gpui",
-    "local-policy",
-    "libdomain",
-    "admc",
-    "gpupdate",
-    "samba",
-    "sssd",
-    "freeipa",
-    "alterator-auth",
-    "alterator-manager",
-    "alterator-module-executor",
-    "alterator-explorer",
-    "alteratorctl",
-    "adt"
-]
+  "default": "default",
+  "configurations": {
+    "default": {
+      "branches": [
+        "sisyphus",
+        "p11",
+        "p10",
+        "p9",
+        "c10f2",
+        "c10f1",
+        "c9f2"
+      ],
+      "packages": [
+        "gpui",
+        "local-policy",
+        "libdomain",
+        "admc",
+        "gpupdate",
+        "samba",
+        "sssd",
+        "freeipa",
+        "alterator-auth",
+        "alterator-manager",
+        "alterator-module-executor",
+        "alterator-explorer",
+        "alteratorctl",
+        "adt"
+      ]
+    },
+    "greh": {
+      "branches": [
+        "sisyphus",
+        "p11",
+        "p10",
+        "p9",
+        "c10f2",
+        "c10f1",
+        "c9f2"
+      ],
+      "packages": [
+        "gpui",
+        "local-policy",
+        "libdomain",
+        "admc",
+        "samba",
+        "sssd",
+        "freeipa",
+        "alterator-auth",
+        "alterator-manager",
+        "alterator-module-executor",
+        "alterator-explorer",
+        "alteratorctl",
+        "adt",
+        "local-policy",
+        "gpupdate",
+        "oddjob-gpupdate",
+        "admx-basealt",
+        "admx-chromium",
+        "admx-firefox",
+        "admx-yandex-browser"
+      ]
+    }
+  }
 }
