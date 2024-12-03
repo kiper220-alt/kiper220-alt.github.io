@@ -80,21 +80,6 @@ export async function findPackage(name: string[], branch? : string, arch? : stri
     return findResult.data;
 }
 
-async function validatePackageset(packageSets: string[]) {
-    let fetchedPackageSet = await allPkgsets();
-
-    for (let packageSet of packageSets)
-    {
-        if (!fetchedPackageSet.branches?.find((a) => {
-            return a.branch === packageSet;
-        }))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 function makeEmptyVersions(): SiteSourcePackagesVersionsModel
 {
     return new class implements SiteSourcePackagesVersionsModel {
@@ -189,10 +174,6 @@ export class PackagesTable
     }
 
     async fetch() {
-        if (! await validatePackageset(this.packageSets))
-        {
-            throw new Error('Internal Error "Application PackageSets are out of date"');
-        }
         this.versions = await fetchAllSourcePackages(this.packages);
 
         for (let row of this.packageRows)
