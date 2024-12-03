@@ -1,5 +1,5 @@
 ## About
-This web application is designed to compare versions of packages in different branches of Alt Linux repositories
+This web application is designed to compare versions of packages in different branches of Alt Linux repositories.
 
 ## Available Scripts
 For run this project locally, you can use
