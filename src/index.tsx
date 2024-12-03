@@ -2,11 +2,17 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import {makeHeader} from "./header";
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+root.render(
+    <React.StrictMode>
+        {makeHeader()}
+    </React.StrictMode>
+)
 App().then(a =>
     root.render(
         <React.StrictMode>
