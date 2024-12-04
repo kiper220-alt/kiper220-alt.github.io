@@ -32,11 +32,11 @@
       "branches": [
         "sisyphus",
         "p11",
-        "p10",
-        "p9",
+        "p10"
         "c10f2",
         "c10f1",
-        "c9f2"
+        "p9",
+        "c9f2",
       ],
       "packages": [
         "gpui",
