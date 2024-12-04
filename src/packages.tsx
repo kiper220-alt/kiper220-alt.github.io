@@ -189,7 +189,7 @@ export class PackagesTable
 
     render() {
         return <div className="block md:m-5 w-full md:w-[calc(100%_-_2.5rem)] md:rounded-2xl bg-slate-200 dark:bg-gray-900 overflow-x-scroll">
-            <table className="table-auto">
+            <table className="table-auto w-full">
                 <thead>
                 <tr>
                     <th scope="col"></th>
