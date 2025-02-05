@@ -1,17 +1,23 @@
-import React from 'react';
-import {PackagesTable} from './packages';
-import {makeHeader} from "./header";
+import React, {useEffect, useState} from 'react';
+import {PackagesTable, PackageTable} from './packages';
+import {Header} from "./header";
+import {Configuration} from "./rdb";
 
-const currentConfig: string | null = (new URLSearchParams(document.location.search)).get("cur_conf");
-
-interface ConfigurationElement {
+export interface ConfigurationElement {
+    name: string;
     branches: Array<string>;
     packages: Array<string>;
 }
-class Configuration {
-    default: string = "default";
-    configurations: Map<string, ConfigurationElement> = new Map<string, ConfigurationElement>();
+
+export class ACConfiguration {
+    pickedConfiguration: number = 0;
+    configurations: Array<ConfigurationElement> = new Array<ConfigurationElement>();
 }
+
+export const PackageContext = React.createContext({
+    configuration: new ACConfiguration(),
+    updateConfiguration: (configuration: ACConfiguration) => {}
+});
 
 async function checkAndParseJson<Target>(responseJson : Response, url : string, converter: (json:any) => Target) : Promise<Target>
 {
@@ -27,42 +33,66 @@ async function checkAndParseJson<Target>(responseJson : Response, url : string, 
 
     return converter(await responseJson.json());
 }
-function jsonToConfiguration(json: any): Configuration {
-    let configuration = new Configuration();
+function jsonToConfiguration(json: any): ACConfiguration {
+    let configuration = new ACConfiguration();
 
-    configuration.default = json.default;
-    configuration.configurations = new Map(Object.entries(json.configurations));
+    configuration.configurations = json.configurations;
+    console.log(configuration);
 
     return configuration;
 }
 
-async function App() {
-    let configurationsResponse: Response = await fetch ("/settings.json", {cache: "no-cache"});
-    let configurations = await checkAndParseJson<Configuration>(configurationsResponse, "/settings.json", jsonToConfiguration);
-    let configuration: ConfigurationElement | undefined = undefined;
+async function getConfiguration(): Promise<ACConfiguration> {
+    let configurationsJson = localStorage.getItem('ac_config');
+    let configurations: ACConfiguration;
 
-    if (currentConfig !== null) {
-        configuration = configurations.configurations.get(currentConfig);
+    if (configurationsJson !== null) {
+        configurations = jsonToConfiguration(JSON.parse(configurationsJson));
     }
-    if (configuration === undefined)
-    {
-        configuration = configurations.configurations.get(configurations.default);
-    }
-    if (configuration === undefined)
-    {
-        throw new Error("Invalid configurations.");
+    else {
+        let configurationsResponse = await fetch ("/settings.json", {cache: "no-cache"});
+        configurations = await checkAndParseJson<ACConfiguration>(configurationsResponse, "/settings.json", jsonToConfiguration);
+        localStorage.setItem("ac_config", JSON.stringify(configurations));
     }
 
-    let table = new PackagesTable(configuration.branches, configuration.packages);
-
-    await table.fetch();
-
-    return (
-        <div className="App w-full bg-slate-100 text-slate-800 dark:bg-gray-950 dark:text-gray-300">
-            { makeHeader() }
-            { table.render() }
-        </div>
-    );
+    return configurations;
 }
+
+let defaultConfiguration: ACConfiguration | null = null;
+
+function App() {
+    const [configuration, setConfiguration] = React.useState<ACConfiguration | null>(null);
+
+    useEffect(() => {
+        async function getConfEffect() {
+            setConfiguration(null);
+            defaultConfiguration = await getConfiguration();
+            setConfiguration(defaultConfiguration);
+        }
+        getConfEffect();
+    }, []);
+
+    return configuration === null ? <div></div>: <AppFetched/>;
+}
+function AppFetched() {
+    const [context, setContext] = React.useState(defaultConfiguration);
+
+    let updateConfiguration = (configuration: ACConfiguration) => {
+        localStorage.setItem("ac_config", JSON.stringify(configuration));
+        setContext(configuration);
+    };
+
+    if (!context) {
+        return <div></div>;
+    }
+
+    return <div className="App flex flex-col overflow-hidden h-screen w-full bg-slate-100 text-slate-800 dark:bg-gray-950 dark:text-gray-300">
+        <PackageContext.Provider value={{configuration: context, updateConfiguration: updateConfiguration}}>
+            <Header/>
+            <PackageTable/>
+        </PackageContext.Provider>
+    </div>;
+}
+
 
 export default App;

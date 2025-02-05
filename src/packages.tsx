@@ -216,3 +216,20 @@ export class PackagesTable
     versions = new Map<string, SiteSourcePackagesVersionsModel>();
     packageRows: PackageRow[];
 }
+
+export function PackageTable() {
+    const {configuration, updateConfiguration} = React.useContext(PackageContext);
+    const [table, setTable] = React.useState<PackagesTable | null>(null);
+
+    useEffect(() => {
+        async function genTable() {
+            setTable(null);
+            let table = new PackagesTable(configuration.configurations[configuration.pickedConfiguration].branches, configuration.configurations[configuration.pickedConfiguration].packages)
+            await table.fetch();
+            setTable(table);
+        }
+        genTable();
+    }, [configuration]);
+
+    return table === null ? <div></div> : table.render();
+}

@@ -16,7 +16,6 @@ export function onChangeTheme(theme: ChangeEvent<HTMLSelectElement>) {
     {
         localStorage.removeItem('theme')
     }
-    console.log(theme.target.value);
     localStorage.theme = theme.target.value;
 
     document.documentElement.classList.toggle(
@@ -30,7 +29,7 @@ export function onChangeTheme(theme: ChangeEvent<HTMLSelectElement>) {
     )
 }
 
-export function makeHeader(){
+export function Header(){
     let theme: string;
 
     if (localStorage.theme === undefined) {
@@ -40,7 +39,7 @@ export function makeHeader(){
         theme = localStorage.theme;
     }
 
-    return  <Disclosure as="nav" className="bg-slate-200 dark:bg-gray-900 md:m-5 md:rounded-2xl block box-border overflow-auto">
+    return  <Disclosure as="nav" className="bg-slate-200 dark:bg-gray-900 md:m-5 md:rounded-2xl block min-h-max box-border overflow-hidden">
                 <Select className="m-5 block appearance-none rounded-lg border-none bg-black/5 dark:bg-white/5 py-1.5 px-3 text-sm/6 dark:text-white focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25 dark:*:text-black" onChange={onChangeTheme} name="theme" defaultValue={theme} aria-label="Theme">
                     <option value="system">System</option>
                     <option value="light">Light</option>

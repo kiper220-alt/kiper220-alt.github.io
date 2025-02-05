@@ -1,7 +1,8 @@
 {
-  "default": "default",
-  "configurations": {
-    "default": {
+  "pickedConfiguration": "0",
+  "configurations": [
+    {
+      "name": "default",
       "branches": [
         "sisyphus",
         "p11",
@@ -28,7 +29,8 @@
         "adt"
       ]
     },
-    "greh": {
+    {
+      "name": "greh",
       "branches": [
         "sisyphus",
         "p11",
@@ -61,5 +63,5 @@
         "admx-yandex-browser"
       ]
     }
-  }
+  ]
 }
