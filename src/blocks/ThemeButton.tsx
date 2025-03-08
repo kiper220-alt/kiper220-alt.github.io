@@ -20,8 +20,6 @@ function ThemeButton() {
     }
 
     function handleChange(event: ChangeEvent<HTMLSelectElement>) {
-        console.log(event.target.value);
-
         switch (event.target.value) {
             case 'system':
                 localStorage.removeItem('theme');
@@ -39,7 +37,6 @@ function ThemeButton() {
                 document.documentElement.classList.toggle('light', true);
                 break;
         }
-        console.log(localStorage.theme);
     }
 
     return <select

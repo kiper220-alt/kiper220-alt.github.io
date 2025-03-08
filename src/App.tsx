@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
 import './App.css';
-import {TableContent, TableContext, VersionTable} from "./blocks/VersionTable";
-import SearchField, {SearchFieldContext, SearchFieldContextData} from "./blocks/SearchField";
+import {TableContent} from "./blocks/VersionTable";
+import {TableGroup, TableGroupConfig, TableGroupContext} from "./blocks/TableGroup";
+import {useEffect, useState} from "react";
 import ThemeButton from "./blocks/ThemeButton";
+import {SearchField, SearchFieldContext, SearchFieldContextData} from "./blocks/SearchField";
 
 let testContent = new TableContent();
 testContent.package_branches = [
@@ -21,20 +22,142 @@ testContent.package_branches = [
 ];
 testContent.package_names = [];
 
-function App() {
-    const [tableContent, setTableContent] = useState(testContent);
-    let fieldContext = new SearchFieldContextData();
+function loadConfig(): TableGroupConfig {
+    let config = new TableGroupConfig(() => {
+    }, () => {
+    }, () => {
+    }, () => {
+    });
+    let str = localStorage.getItem("config");
 
-    function addPackage(package_name: string) {
-        setTableContent({
-            package_names: [package_name, ...tableContent.package_names],
-            package_branches: tableContent.package_branches,
-            iteration: tableContent.iteration + 1
-        });
+    if (!str) {
+        return config;
     }
 
+    let json = JSON.parse(str);
+
+    config.packages = json.packages;
+    config.tab = json.tab;
+
+    return config;
+}
+
+function App() {
+    const [groupContext, setContext] = useState(loadConfig());
+    let fieldContext = new SearchFieldContextData();
+
+    useEffect(() => {
+        localStorage.setItem("config", JSON.stringify({packages: groupContext.packages, tab: groupContext.tab}));
+    }, [groupContext]);
+
+    function getNewName(base: string): string {
+        let new_name = base;
+        let iteration = 0;
+        let index = -1;
+
+        while (true) {
+            // eslint-disable-next-line no-loop-func
+            index = groupContext.packages.findIndex(a => a[0] === new_name);
+            if (index === -1) {
+                break;
+            }
+            new_name = base + ++iteration;
+        }
+
+        return new_name;
+    }
+
+    function setPackages(packages: string[]) {
+        let context = {...groupContext};
+        if (context.packages.length === 0) {
+            context.packages.push(["group", packages]);
+            setContext(context);
+            return;
+        }
+        context.packages[context.tab][1] = packages;
+        setContext(context);
+        return;
+    }
+
+    function addPackage(package_name: string) {
+        let context = {...groupContext};
+        if (context.packages.length === 0) {
+            context.packages.push(["group", [package_name]]);
+            setContext(context);
+            return;
+        }
+        context.packages[context.tab][1].push(package_name);
+        setContext(context);
+        return;
+    }
+
+    function addConfiguration(): string {
+        let context = {...groupContext};
+        let new_name = getNewName("group");
+
+        context.packages.push([new_name, []]);
+        context.tab = context.packages.length - 1;
+        setContext(context);
+        return new_name;
+    }
+
+    function changeTab(tab: number): number {
+        let context = {...groupContext};
+        if (tab >= context.packages.length) {
+            if (tab === 0) {
+                return 0;
+            }
+            if (context.packages.length === 0) {
+                tab = 0;
+            } else {
+                tab = context.packages.length - 1;
+            }
+        }
+        context.tab = tab;
+        setContext(context);
+        return 0;
+    }
+
+    function removeConfiguration(tab: number): boolean {
+        let context = {...groupContext};
+
+        if (tab >= context.packages.length || tab < 0) {
+            return false;
+        }
+        if (tab <= context.tab && context.tab !== 0) {
+            context.tab = context.tab - 1;
+        }
+
+        context.packages = [...context.packages.slice(0, tab), ...context.packages.slice(tab + 1)];
+        setContext(context);
+        return true;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    function renameConfiguration(tab: number, new_name: string) {
+        let context = {...groupContext};
+
+        if (tab >= context.packages.length || tab < 0) {
+            return;
+        }
+
+        context.packages[tab][0] = new_name;
+        setContext(context);
+    }
+
+    // update delegates.
+    groupContext.setPackages = setPackages;
+    groupContext.changeTab = changeTab;
+    groupContext.addConfiguration = addConfiguration;
+    groupContext.removeConfiguration = removeConfiguration;
     fieldContext.addPackage = addPackage;
-    fieldContext.removePackages = tableContent.package_names;
+
+    // update package list for searching.
+    if (groupContext.packages.length > 0) {
+        fieldContext.removePackages = groupContext.packages[groupContext.tab][1];
+    } else {
+        fieldContext.removePackages = [];
+    }
 
     return (
         <div className="App h-screen w-screen flex flex-col justify-start overflow-hidden">
@@ -49,12 +172,13 @@ function App() {
                 </div>
             </div>
             <div className="box-border overflow-auto">
-                <TableContext value={{tableContent, setTableContent}}>
-                    <VersionTable/>
-                </TableContext>
+                <TableGroupContext value={groupContext}>
+                    <TableGroup/>
+                </TableGroupContext>
             </div>
         </div>
     );
+
 }
 
 export default App;

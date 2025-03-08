@@ -15,17 +15,17 @@ export class TableContextData {
 export type PackageTableRow = Map<string, string>; // version by branch
 export type PackageTable = Map<string, PackageTableRow>;  // branch:version by package.
 export type SwapEvent = (package1: string, package2: string) => void;
+export type RemoveEvent = (package_name: string) => void;
 
 export const TableContext = createContext<TableContextData | undefined>(undefined);
 
-function TableMakeRow(name: string, package_names: string[], package_branches: string[], row: PackageTableRow, swap: SwapEvent) {
+function TableMakeRow(name: string, package_names: string[], package_branches: string[], row: PackageTableRow, swap: SwapEvent, remove: RemoveEvent) {
 
     function dragStart(event: DragEvent<HTMLTableRowElement>) {
         if (!(event.target instanceof HTMLTableRowElement)) {
             event.preventDefault();
             return;
         }
-        console.log('dragStart', event.target);
         event.dataTransfer.dropEffect = "move";
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData("text/plain", name);
@@ -67,15 +67,20 @@ function TableMakeRow(name: string, package_names: string[], package_branches: s
         for (let grab of document.getElementsByClassName("grab_hover")) {
             grab.classList.remove("grab_hover");
         }
-        console.log("hello");
     }
 
     return <tr key={"tbody-" + name} draggable={true} onDragStart={dragStart} onDrop={onDrop} onDragOver={onDragOver}
                onDragEnter={onDragEnter} onDragLeave={onDragLeave} onDragEnd={onDragEnd}
                className={"w-full object cursor-grab active:cursor-grabbing active:shadow-none dark:active:shadow-none hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)]" +
                    " dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)]"}>
-        <td key={"tbody-" + name + "-name"} className={"text-center w-min text-1xl font-bold p-2 transition-shadow" +
-            "hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)] dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)]"}>
+        <td key={"tbody-" + name + "-name"}
+            className={"text-center flex w-min items-center text-1xl font-bold p-2 transition-shadow" +
+                "hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)] dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)]"}>
+            <span onClick={a => {
+                a.stopPropagation();
+                remove(name);
+            }}
+                  className={"rounded-full text-center flex justify-center items-center text-[12px] h-4 w-4 p-0 m-0 mr-5 overflow-hidden bg-red-500/50 hover:bg-red-500/80 cursor-pointer select-none"}>⨯</span>
             {name}</td>
         {
             package_branches.map((branch: string) => {
@@ -100,7 +105,6 @@ function TableMakeRow(name: string, package_names: string[], package_branches: s
 }
 
 export function VersionTable() {
-    const [iteration, setIteration] = useState<number>(-1);
     const [table, setTable] = useState<null | PackageTable>(null);
     const context = useContext(TableContext);
 
@@ -139,12 +143,23 @@ export function VersionTable() {
         });
     }
 
-    useEffect(() => {
+    function removeEvent(package_name: string) {
         if (context === undefined || context.tableContent === undefined || context.setTableContent === undefined) {
             return;
         }
+        let package_names = context.tableContent.package_names;
+        const packageIndex = package_names.findIndex((a) => a === package_name);
+        package_names = [...package_names.slice(0, packageIndex), ...package_names.slice(packageIndex + 1)];
 
-        if (iteration === context.tableContent.iteration) {
+        context.setTableContent({
+            package_names: package_names,
+            package_branches: context.tableContent.package_branches,
+            iteration: context.tableContent.iteration,
+        });
+    }
+
+    useEffect(() => {
+        if (context === undefined || context.tableContent === undefined || context.setTableContent === undefined) {
             return;
         }
 
@@ -178,8 +193,6 @@ export function VersionTable() {
             return data;
         }).then(data => {
             setTable(data);
-            // @ts-ignore
-            setIteration(context.tableContent.iteration);
         });
 
         return;
@@ -211,7 +224,7 @@ export function VersionTable() {
                     row = new Map<string, string>();
                 }
                 // @ts-ignore
-                return TableMakeRow(a, context.tableContent.package_names, context.tableContent.package_branches, row, swapEvent);
+                return TableMakeRow(a, context.tableContent.package_names, context.tableContent.package_branches, row, swapEvent, removeEvent);
             })
         }
         </tbody>

@@ -34,7 +34,7 @@ export function SearchField() {
             clearTimeout(searchTimeout);
         }
 
-        if (!search || !search.length) {
+        if (!search || search.length < 2) {
             if (result && result.length) {
                 setResult([]);
             }
@@ -74,7 +74,15 @@ export function SearchField() {
             "dark:text-white"
         }>
             <input
-                pattern={"/^([\\w.+-]{2,} ?)+$/"}
+                onInput={a => {
+                    if (a.target instanceof HTMLInputElement) {
+                        let regexp = /^([\w.+-]* ?)+$/;
+                        if (!regexp.test(a.target.value)) {
+                            a.target.value = search;
+                            return;
+                        }
+                    }
+                }}
                 onKeyDown={a => {
                     if (a.keyCode === 27) {
                         setSearch("");
@@ -85,7 +93,7 @@ export function SearchField() {
                     "dark:text-white focus:outline-none data-[focus]:outline-2 data-[focus]:-outline-offset-2 data-[focus]:outline-white/25"
                 }
                 onChange={e => {
-                    setSearch(e.target.value)
+                    setSearch(e.target.value);
                 }} value={search}/>
             {(search && search.length) ?
                 <span onClick={_ => setSearch("")}
