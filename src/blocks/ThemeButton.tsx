@@ -40,8 +40,8 @@ function ThemeButton() {
     }
 
     return <select
-        className={"block appearance-none rounded-lg border-none bg-black/5 dark:bg-white/5 p-1.5 px-3" +
-            "text-sm/6 dark:text-white focus:outline-none data-[focus]:outline-2 " +
+        className={"block appearance-none rounded-lg cursor-pointer border-none bg-black/5 dark:bg-white/5 p-1.5 px-3 " +
+            "text-sm/6 text-center dark:text-white focus:outline-none data-[focus]:outline-2 " +
             "data-[focus]:-outline-offset-2 data-[focus]:outline-white/25 dark:*:text-black"}
         onChange={handleChange}
         name="theme" defaultValue={theme} aria-label="Theme">

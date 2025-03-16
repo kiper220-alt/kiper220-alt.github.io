@@ -5,6 +5,7 @@ import {
     SitePackageVersionsElementModel,
     SiteSourcePackagesVersionsModel
 } from "../rdb";
+import {TableGroupConfig} from "../blocks/TableGroup";
 
 let configuration: Configuration = new Configuration({basePath: "https://rdb.altlinux.org/api"});
 let packageApiInstance: PackageApi = new PackageApi(configuration);
@@ -17,7 +18,7 @@ export class SearchResultElement {
 
 export type LoadingState = void;
 
-export async function findPackage(packageName: string): Promise<SearchResultElement[]> {
+export async function findPackage(packageName: string, neededBranches?: Set<string>): Promise<SearchResultElement[]> {
     let name = packageName.split(" ").filter(a => a.length > 0);
     let findPackageResponse;
     try {
@@ -32,7 +33,25 @@ export async function findPackage(packageName: string): Promise<SearchResultElem
         return [];
     }
 
-    return findPackageResponse.data.packages.map(a => {
+    let packages = findPackageResponse.data.packages;
+
+    if (neededBranches !== undefined) {
+        packages = packages.filter(a => {
+            if (a.versions === undefined) {
+                return false;
+            }
+
+            for (const branch of a.versions) {
+                // @ts-ignore
+                if (neededBranches.has(branch.branch)) {
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
+    return packages.map(a => {
         let result = new SearchResultElement();
         let sisyphus: SitePackageVersionsElementModel | undefined;
         if (a.name === undefined) {
@@ -86,4 +105,36 @@ export async function fetchAllSourcePackages(packages: string[], branches: strin
     }));
 
     return models;
+}
+
+export function saveAs(text: string, filename: string) {
+    const blob = new Blob([text], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+export function loadConfig(): TableGroupConfig {
+    let config = new TableGroupConfig(() => {
+    }, () => {
+    }, () => {
+    }, () => {
+    });
+    let str = localStorage.getItem("config");
+
+    if (!str) {
+        return config;
+    }
+
+    let json = JSON.parse(str);
+
+    config.packages = json.packages;
+    config.tab = json.tab;
+
+    return config;
 }

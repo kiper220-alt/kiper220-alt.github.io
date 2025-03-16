@@ -1,5 +1,6 @@
 import {createContext, DragEvent, useContext, useEffect, useState} from "react";
 import {fetchAllSourcePackages} from "../utils/loading";
+import {compareVersionsString} from "../utils/versioning";
 
 export class TableContent {
     package_names: string[] = [];
@@ -18,6 +19,17 @@ export type SwapEvent = (package1: string, package2: string) => void;
 export type RemoveEvent = (package_name: string) => void;
 
 export const TableContext = createContext<TableContextData | undefined>(undefined);
+
+function compareVersionsIndicatior(version1: string, version2: string): string {
+    let comparison = compareVersionsString(version1, version2);
+    if (comparison === undefined || comparison === 0) {
+        return "";
+    }
+    if (comparison < 0) {
+        return "bg-red-300/30 dark:bg-red-300/10";
+    }
+    return "bg-green-300/30 dark:bg-green-300/10";
+}
 
 function TableMakeRow(name: string, package_names: string[], package_branches: string[], row: PackageTableRow, swap: SwapEvent, remove: RemoveEvent) {
 
@@ -80,19 +92,36 @@ function TableMakeRow(name: string, package_names: string[], package_branches: s
                 a.stopPropagation();
                 remove(name);
             }}
-                  className={"rounded-full text-center flex justify-center items-center text-[12px] h-4 w-4 p-0 m-0 mr-5 overflow-hidden bg-red-500/50 hover:bg-red-500/80 cursor-pointer select-none"}>⨯</span>
+                  className={"rounded-full text-center flex justify-center items-center text-[12px] box-border min-w-[16px] min-h-[16px] h-[16px] w-[16px] p-0 m-0 mr-5 overflow-hidden bg-red-500/50 hover:bg-red-500/80 cursor-pointer select-none"}>⨯</span>
             {name}</td>
         {
-            package_branches.map((branch: string) => {
+            package_branches.map((branch: string, i) => {
                 let version = row.get(branch);
+                let prev_version = row.get(package_branches[i - 1]);
 
                 if (!version) {
                     return <td key={"tbody-" + name + "-" + branch}
                                className="font-light text-center text-xl p-2">-</td>;
                 }
 
+                if (i === 0) {
+                    return <td key={"tbody-" + name + "-" + branch}
+                               className="text-center text-1xl transition-shadow hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)] dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)]">
+                        <a className="p-2 block text-nowrap"
+                           href={"https://packages.altlinux.org/ru/" + branch + "/srpms/" + name} target="_blank"
+                           rel="noreferrer">
+                            {version}
+                        </a>
+                    </td>;
+                }
+
+                if (!prev_version) {
+                    prev_version = "-";
+                }
+
                 return <td key={"tbody-" + name + "-" + branch}
-                           className="text-center text-1xl transition-shadow hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)] dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)]">
+                           className={"text-center text-1xl transition-shadow hover:shadow-[0px_0px_5px_2px_rgba(0,_0,_0,_0.10)] dark:hover:shadow-[0px_0px_5px_2px_rgba(255,_255,_255,_0.10)] " +
+                               compareVersionsIndicatior(version, prev_version)}>
                     <a className="p-2 block text-nowrap"
                        href={"https://packages.altlinux.org/ru/" + branch + "/srpms/" + name} target="_blank"
                        rel="noreferrer">

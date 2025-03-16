@@ -3,6 +3,7 @@ import {findPackage, SearchResultElement} from "../utils/loading";
 
 export class SearchFieldContextData {
     removePackages: string[] = [];
+    neededBranches: Set<string> = new Set();
 
     addPackage: (package_name: string) => void = (_: string) => {
     };
@@ -42,8 +43,9 @@ export function SearchField() {
         }
 
         function handleSearch() {
-            findPackage(search).then(arr => {
-                arr = arr.filter((item) => context?.removePackages.findIndex(a => item.name === a) === -1)
+            // @ts-ignore
+            findPackage(search, context.neededBranches).then(arr => {
+                arr = arr.filter((item) => context?.removePackages.findIndex(a => item.name === a) === -1);
                 arr.length = Math.min(arr.length, 5);
                 setResult(arr);
             });
