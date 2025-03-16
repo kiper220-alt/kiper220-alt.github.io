@@ -1,9 +1,12 @@
 import './App.css';
 import {TableContent} from "./blocks/VersionTable";
-import {TableGroup, TableGroupConfig, TableGroupContext} from "./blocks/TableGroup";
+import {TableGroup, TableGroupContext} from "./blocks/TableGroup";
 import {useEffect, useState} from "react";
 import ThemeButton from "./blocks/ThemeButton";
 import {SearchField, SearchFieldContext, SearchFieldContextData} from "./blocks/SearchField";
+import {SaveConfigurationButton} from "./blocks/SaveConfiguration";
+import {loadConfig} from "./utils/loading";
+import {LoadConfigurationButton} from "./blocks/LoadConfiguration";
 
 let testContent = new TableContent();
 testContent.package_branches = [
@@ -22,25 +25,6 @@ testContent.package_branches = [
 ];
 testContent.package_names = [];
 
-function loadConfig(): TableGroupConfig {
-    let config = new TableGroupConfig(() => {
-    }, () => {
-    }, () => {
-    }, () => {
-    });
-    let str = localStorage.getItem("config");
-
-    if (!str) {
-        return config;
-    }
-
-    let json = JSON.parse(str);
-
-    config.packages = json.packages;
-    config.tab = json.tab;
-
-    return config;
-}
 
 function App() {
     const [groupContext, setContext] = useState(loadConfig());
@@ -151,6 +135,7 @@ function App() {
     groupContext.addConfiguration = addConfiguration;
     groupContext.removeConfiguration = removeConfiguration;
     fieldContext.addPackage = addPackage;
+    fieldContext.neededBranches = new Set(groupContext.branches);
 
     // update package list for searching.
     if (groupContext.packages.length > 0) {
@@ -165,7 +150,11 @@ function App() {
                 className="w-full p-2">
                 <div
                     className="flex justify-between w-full p-5 rounded-lg md:rounded-2xl bg-slate-200 dark:bg-gray-900 text-slate-800 dark:text-gray-300">
-                    <ThemeButton/>
+                    <div className="flex">
+                        <ThemeButton/>
+                        <SaveConfigurationButton/>
+                        <LoadConfigurationButton configuration={groupContext} setConfiguration={setContext}/>
+                    </div>
                     <SearchFieldContext.Provider value={fieldContext}>
                         <SearchField/>
                     </SearchFieldContext.Provider>

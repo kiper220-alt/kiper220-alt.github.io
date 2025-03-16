@@ -30,7 +30,7 @@ function addTabs(context: TableGroupConfig, tab: number, setTab: ((page: number)
                 a.stopPropagation();
                 context.removeConfiguration(n);
             }}
-                  className={"rounded-full text-center flex justify-center items-center text-[12px] h-4 w-4 p-0 m-0 ml-5 overflow-hidden bg-red-500/40 hover:bg-red-500/50 active:bg-red-500/70 cursor-pointer select-none"}>⨯</span>
+                  className={"rounded-full text-center flex justify-center items-center text-[12px] box-border min-w-[16px] min-h-[16px] h-[16px] w-[16px] p-0 m-0 ml-5 overflow-hidden bg-red-500/40 hover:bg-red-500/50 active:bg-red-500/70 cursor-pointer select-none"}>⨯</span>
         </div>;
     });
 }
@@ -62,7 +62,7 @@ export function TableGroup() {
             <div onClick={_ => {
                 groupContext.addConfiguration();
             }}
-                 className={"w-5 h-5 box-border flex select-none cursor-pointer items-center justify-center transition-colors bg-green-500/40 hover:bg-green-500/50 active:bg-green-500/70"}>
+                 className={"min-w-[20px] min-h-[20px] w-[20px] h-[20px] box-border flex select-none cursor-pointer items-center justify-center transition-colors bg-green-500/40 hover:bg-green-500/50 active:bg-green-500/70"}>
                 +
             </div>
         </div>
