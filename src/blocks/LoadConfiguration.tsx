@@ -17,7 +17,6 @@ export function LoadConfigurationButton(loadConfig: LoadConfig) {
                     const contents = e.target?.result as string;
                     try {
                         const json = JSON.parse(contents);
-
                         if (!(json.packages === undefined || json.tab === undefined)) {
                             let newConfiguration: TableGroupConfig = {...loadConfig.configuration};
                             newConfiguration.packages = json.packages;
