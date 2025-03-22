@@ -70,9 +70,9 @@ export function SearchField() {
         }
     }
 
-    return <div className={"max-w-min"}>
+    return <div className={""}>
         <div className={
-            "flex flex-row items-center justify-stretch w-96 rounded-[0.6em] border-none bg-red-500 px-3text-sm/6 " +
+            "flex flex-row items-center justify-stretch w-full rounded-[0.6em] border-none bg-red-500 px-3text-sm/6 " +
             "dark:text-white"
         }>
             <input

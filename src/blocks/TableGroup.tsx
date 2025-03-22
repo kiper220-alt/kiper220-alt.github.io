@@ -53,9 +53,9 @@ export function TableGroup() {
     if (!groupContext || !groupContext.setPackages || !groupContext.addConfiguration || !groupContext.removeConfiguration) {
         return null;
     }
-    return <div key="table-group" className={"dark:text-white"}>
+    return <div key="table-group" className={"dark:text-white flex h-full flex-col justify-stretch overflow-hidden"}>
         <div key="table-group-tabs"
-             className={"flex items-center *:mr-2 bg-black/5 dark:bg-gray-900 overflow-y-hidden"}>
+             className={"flex max-h-max items-center *:mr-2 bg-black/5 h-full dark:bg-gray-900 overflow-y-hidden"}>
             {
                 addTabs(groupContext, groupContext.tab, groupContext.changeTab)
             }
@@ -66,7 +66,7 @@ export function TableGroup() {
                 +
             </div>
         </div>
-        <div className={"box-border overflow-auto"}>
+        <div className={"box-border relative flex flex-col justify-stretch h-full overflow-auto"}>
             {
                 groupContext.packages.length > 0 ?
                     <TableContext value={{
