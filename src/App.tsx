@@ -5,8 +5,9 @@ import {useEffect, useState} from "react";
 import ThemeButton from "./blocks/ThemeButton";
 import {SearchField, SearchFieldContext, SearchFieldContextData} from "./blocks/SearchField";
 import {SaveConfigurationButton} from "./blocks/SaveConfiguration";
-import {loadConfig} from "./utils/loading";
+import {loadConfig} from "./utils/config";
 import {LoadConfigurationButton} from "./blocks/LoadConfiguration";
+import {DefaultConfigurationButton} from "./blocks/DefaultConfiguration";
 
 let testContent = new TableContent();
 testContent.package_branches = [
@@ -24,7 +25,6 @@ testContent.package_branches = [
     "c9f2",
 ];
 testContent.package_names = [];
-
 
 function App() {
     const [groupContext, setContext] = useState(loadConfig());
@@ -145,13 +145,14 @@ function App() {
     }
 
     return (
-        <div className="App h-screen w-screen flex flex-col justify-start overflow-hidden">
+        <div className="App h-screen w-screen flex flex-col justify-stretch overflow-hidden">
             <div
                 className="w-full p-2">
                 <div
-                    className="flex justify-between w-full p-5 rounded-lg md:rounded-2xl bg-slate-200 dark:bg-gray-900 text-slate-800 dark:text-gray-300">
-                    <div className="flex">
+                    className="flex justify-between items-center w-full p-5 rounded-lg md:rounded-2xl bg-slate-200 dark:bg-gray-900 text-slate-800 dark:text-gray-300">
+                    <div className="grid items-stretch gap-0 lg:grid-cols-4 grid-cols-2">
                         <ThemeButton/>
+                        <DefaultConfigurationButton groupContext={groupContext} setContext={setContext}/>
                         <SaveConfigurationButton/>
                         <LoadConfigurationButton configuration={groupContext} setConfiguration={setContext}/>
                     </div>
@@ -160,7 +161,7 @@ function App() {
                     </SearchFieldContext.Provider>
                 </div>
             </div>
-            <div className="box-border overflow-auto">
+            <div className="box-border overflow-auto h-full flex flex-col">
                 <TableGroupContext value={groupContext}>
                     <TableGroup/>
                 </TableGroupContext>

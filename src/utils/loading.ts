@@ -5,11 +5,67 @@ import {
     SitePackageVersionsElementModel,
     SiteSourcePackagesVersionsModel
 } from "../rdb";
-import {TableGroupConfig} from "../blocks/TableGroup";
 
-let configuration: Configuration = new Configuration({basePath: "https://rdb.altlinux.org/api"});
-let packageApiInstance: PackageApi = new PackageApi(configuration);
-let siteApiInstance: SiteApi = new SiteApi(configuration);
+class VersionUpdater {
+    versions: PackageTable = new Map<string, Map<string, string>>();
+    branches: Set<string> = new Set<string>();
+    fetched: boolean = true;
+
+    public addPackages(packages: string[]) {
+        packages.forEach((p) => {
+            if (!this.versions.has(p)) {
+                this.versions.set(p, new Map<string, string>());
+                this.fetched = false;
+            }
+        })
+    }
+
+    public addBranches(branches: string[]) {
+        branches.forEach((b) => {
+            if (!this.branches.has(b)) {
+                this.branches.add(b);
+                this.fetched = false;
+            }
+        })
+    }
+
+    public getVersions(packages: string[]): PackageTable {
+        return new Map(packages.map(p => {
+            let tmp = this.versions.get(p);
+            if (tmp === undefined) {
+                return [p, new Map<string, string>()];
+            }
+            return [p, tmp];
+        }));
+    }
+
+    public async fetch(): Promise<boolean> {
+        if (this.fetched) {
+            return false;
+        }
+        await this.updateAll();
+        return true;
+    }
+
+    async updateAll() {
+        let packages = [...this.versions.keys()];
+        let fetch = await fetchAllSourcePackages(packages, [...this.branches.keys()]);
+
+        this.versions = new Map(packages.map((a) => {
+            let tmp = fetch.get(a);
+            if (tmp === undefined) {
+                return [a, new Map<string, string>()];
+            }
+            return [a, new Map(tmp.versions?.map((a) => {
+                if (a.branch === undefined || a.version === undefined || a.release === undefined) {
+                    throw new Error("Unable to fetch package: `" + a + "`");
+                }
+                return [a.branch, a.version + "-" + a.release];
+            }))]
+        }));
+        this.fetched = true;
+    }
+}
 
 export class SearchResultElement {
     name: string = "";
@@ -17,6 +73,14 @@ export class SearchResultElement {
 }
 
 export type LoadingState = void;
+
+let configuration: Configuration = new Configuration({basePath: "https://rdb.altlinux.org/api"});
+let packageApiInstance: PackageApi = new PackageApi(configuration);
+let siteApiInstance: SiteApi = new SiteApi(configuration);
+export type PackageTableRow = Map<string, string>; // version by branch
+export type PackageTable = Map<string, PackageTableRow>;  // branch:version by package.
+export let versionUpdater: VersionUpdater = new VersionUpdater();
+
 
 export async function findPackage(packageName: string, neededBranches?: Set<string>): Promise<SearchResultElement[]> {
     let name = packageName.split(" ").filter(a => a.length > 0);
@@ -105,36 +169,4 @@ export async function fetchAllSourcePackages(packages: string[], branches: strin
     }));
 
     return models;
-}
-
-export function saveAs(text: string, filename: string) {
-    const blob = new Blob([text], {type: 'application/json'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-
-    a.click();
-
-    URL.revokeObjectURL(url);
-}
-
-export function loadConfig(): TableGroupConfig {
-    let config = new TableGroupConfig(() => {
-    }, () => {
-    }, () => {
-    }, () => {
-    });
-    let str = localStorage.getItem("config");
-
-    if (!str) {
-        return config;
-    }
-
-    let json = JSON.parse(str);
-
-    config.packages = json.packages;
-    config.tab = json.tab;
-
-    return config;
 }
