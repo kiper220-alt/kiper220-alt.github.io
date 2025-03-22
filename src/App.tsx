@@ -7,6 +7,7 @@ import {SearchField, SearchFieldContext, SearchFieldContextData} from "./blocks/
 import {SaveConfigurationButton} from "./blocks/SaveConfiguration";
 import {loadConfig} from "./utils/config";
 import {LoadConfigurationButton} from "./blocks/LoadConfiguration";
+import {DefaultConfigurationButton} from "./blocks/DefaultConfiguration";
 
 let testContent = new TableContent();
 testContent.package_branches = [
@@ -149,8 +150,9 @@ function App() {
                 className="w-full p-2">
                 <div
                     className="flex justify-between items-center w-full p-5 rounded-lg md:rounded-2xl bg-slate-200 dark:bg-gray-900 text-slate-800 dark:text-gray-300">
-                    <div className="flex items-stretch sm:flex-row flex-col">
+                    <div className="grid items-stretch gap-0 lg:grid-cols-4 grid-cols-2">
                         <ThemeButton/>
+                        <DefaultConfigurationButton groupContext={groupContext} setContext={setContext}/>
                         <SaveConfigurationButton/>
                         <LoadConfigurationButton configuration={groupContext} setConfiguration={setContext}/>
                     </div>
