@@ -5,7 +5,6 @@ import {
     SitePackageVersionsElementModel,
     SiteSourcePackagesVersionsModel
 } from "../rdb";
-import {TableGroupConfig} from "../blocks/TableGroup";
 
 class VersionUpdater {
     versions: PackageTable = new Map<string, Map<string, string>>();
