@@ -1,0 +1,23 @@
+{
+  "data": [
+    "gpui",
+    "local-policy",
+    "libdomain",
+    "admc",
+    "gpupdate",
+    "oddjob-gpupdate",
+    "samba",
+    "sssd",
+    "freeipa",
+    "alterator-auth",
+    "alterator-manager",
+    "alterator-module-executor",
+    "alterator-explorer",
+    "alteratorctl",
+    "adt",
+    "admx-basealt",
+    "admx-chromium",
+    "admx-firefox",
+    "admx-yandex-browser"
+  ]
+}
