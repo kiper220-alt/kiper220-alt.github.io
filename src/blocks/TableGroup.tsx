@@ -55,14 +55,14 @@ export function TableGroup() {
     }
     return <div key="table-group" className={"dark:text-white flex h-full flex-col justify-stretch overflow-hidden"}>
         <div key="table-group-tabs"
-             className={"flex max-h-max items-center *:mr-2 bg-black/5 h-full dark:bg-gray-900 overflow-y-hidden"}>
+             className={"flex max-h-min items-center *:mr-2 bg-black/5 dark:bg-gray-900 overflow-y-hidden"}>
             {
                 addTabs(groupContext, groupContext.tab, groupContext.changeTab)
             }
             <div onClick={_ => {
                 groupContext.addConfiguration();
             }}
-                 className={"min-w-[20px] min-h-[20px] w-[20px] h-[20px] box-border flex select-none cursor-pointer items-center justify-center transition-colors bg-green-500/40 hover:bg-green-500/50 active:bg-green-500/70"}>
+                 className={"min-w-[20px] min-h-[20px] w-[20px] h-[20px] mt-[10px] mb-[10px] ml-[5px] box-border flex select-none cursor-pointer items-center justify-center transition-colors bg-green-500/40 hover:bg-green-500/50 active:bg-green-500/70"}>
                 +
             </div>
         </div>
