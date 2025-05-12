@@ -3,6 +3,9 @@
     import * as search from "./search.ts";
     import {Badge} from "$lib/components/ui/badge/index.js";
     import {cn} from "$lib/utils";
+    import Trash from "@lucide/svelte/icons/trash";
+    import Tag from "@lucide/svelte/icons/tag";
+    import Package from "@lucide/svelte/icons/package";
     import {untrack} from "svelte";
 
     // Интерфейс для результата поиска
@@ -10,6 +13,7 @@
         name: string;
         version: string;
         description: string;
+        deleted: boolean;
     }
 
     // Интерфейс пропсов
@@ -77,6 +81,7 @@
                 aria-live="polite"
         >
             <Skeleton class="h-5 w-28 select-none"/>
+            <Skeleton class="h-4 w-48 mt-1 select-none"/>
             <div class="mt-1 select-none">
                 <Skeleton class="h-5 w-28 float-end"/>
             </div>
@@ -105,16 +110,31 @@
                     tabindex="0"
                     aria-label={`Package ${pkg.name}, version ${pkg.version}`}
             >
-                <div class="font-semibold text-sm select-none">{pkg.name}</div>
+                <div class="font-semibold text-sm select-none flex flex-row">
+                    {#if !pkg.deleted}
+                        <Package size={16}/>
+                    {/if}
+                    {#if pkg.deleted}
+                        <Trash size={16}/>
+                    {/if}
+                    <p class="ml-1">{pkg.name}</p>
+                </div>
                 <div
                         class="text-muted-foreground mt-1 line-clamp-2 text-xs select-none"
                 >
-                    {pkg.description}
+                    <p>{pkg.description}</p>
                 </div>
                 <div class="mt-1 select-none">
-                    <Badge variant="default" class="float-end">
-                        Sis: {pkg.version}
-                    </Badge>
+                    {#if !pkg.deleted}
+                        <Badge variant="default" class="float-end">
+                            <Tag size={16}/><p class="ml-1">{pkg.version}</p>
+                        </Badge>
+                    {/if}
+                    {#if pkg.deleted}
+                        <Badge variant="destructive" class="float-end mr-2">
+                            <Trash size={16}/> <p class="ml-1"> Sisyphus</p>
+                        </Badge>
+                    {/if}
                 </div>
             </div>
         {/each}

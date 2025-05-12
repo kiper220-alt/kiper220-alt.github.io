@@ -1,5 +1,4 @@
 import * as rdb from "$rdb/";
-import {undefined} from "zod";
 
 let configuration: rdb.Configuration = new rdb.Configuration({basePath: "https://rdb.altlinux.org/api"});
 let packageApiInstance: rdb.PackageApi = new rdb.PackageApi(configuration);
@@ -9,11 +8,12 @@ export class FindResultElement {
     name: string | null = null;
     version: string | null = null;
     description: string | null = null;
+    deleted: boolean | null = null;
 }
 
 export async function findPackage(packageName: string): Promise<FindResultElement[]> {
     let name = packageName.split(" ").filter(a => a.length > 0);
-    let findPackageResponse;
+    let findPackageResponse: SiteFingPackagesModel;
 
     findPackageResponse = await siteApiInstance.getRoutePackagesetFindPackagesSiteFindPackages({name: name});
 
@@ -37,25 +37,30 @@ export async function findPackage(packageName: string): Promise<FindResultElemen
         let version;
         let release;
         let sisyphus;
-
         let description: string = "";
+        let deleted = false;
+
         if (index === -1) {
             version = "-";
             release = "";
             sisyphus = "-";
-            description = "Deleted from sisyphus";
+            deleted = true;
         } else {
             version = a.versions[index].version;
             release = a.versions[index].release;
             sisyphus = version + "-" + release;
-            if (a.versions[index].deleted) {
-                description = "Deleted from sisyphus";
+            if (a.versions[index].deleted !== undefined) {
+                deleted = a.versions[index].deleted;
+            }
+            if (a.summary) {
+                description = a.summary;
             }
         }
 
         tmp.name = a.name;
         tmp.version = sisyphus ? sisyphus : null;
         tmp.description = description;
+        tmp.deleted = deleted;
         result.push(tmp);
     }
 
