@@ -12,10 +12,15 @@
     import ThemeButton from "./ThemeButton.svelte";
     import {branchList, type BranchSettings, defaultBranchSettings} from "./settings";
 
+    interface Props {
+        branches: BranchSettings;
+        dndSort: boolean;
+    }
 
     let {
-        branches = $bindable({...defaultBranchSettings}),
-    }: BranchSettings = $props();
+        branches = $bindable({branches: defaultBranchSettings}),
+        dndSort = $bindable(true),
+    }: Props = $props();
 
 </script>
 
@@ -45,8 +50,8 @@
             <section class="p-4 space-y-2">
                 <Label class="text-base font-semibold">Visual</Label>
                 <FieldSwitch
+                        bind:checked={dndSort}
                         description="Enables drag-and-drop table item sorting."
-                        disabled={true}
                         title="Table DnD sort"
                 />
             </section>
@@ -59,8 +64,8 @@
                     {#each branchList as {key, title}}
                         <FieldSwitch
                                 title={title}
-                                bind:checked={branches[key].checked}
-                                disabled={branches[key].disabled ?? false}
+                                bind:checked={branches.branches[key].checked}
+                                disabled={branches.branches[key].disabled ?? false}
                         />
                     {/each}
                 </div>
