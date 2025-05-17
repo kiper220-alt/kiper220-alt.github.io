@@ -33,11 +33,20 @@
         }
     });
 
+    function escapeEvent(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            value = "";
+        }
+    }
+
 </script>
 <div>
-    <HolderPromptInput bind:value={value} class="h-9 sm:w-[500px] lg:w-[700px]" prompts={randomData}/>
+    <HolderPromptInput bind:value={value} class="h-9 sm:w-[500px] lg:w-[700px]" onkeydown={escapeEvent}
+                       prompts={randomData}/>
     {#if open}
-        <div class="h-0 sm:w-[500px] lg:w-[700px] relative top-1">
+        <div class="h-0 sm:w-[500px] z-20 lg:w-[700px] relative top-1">
             <div class="bg-popover text-popover-foreground min-h-5 rounded-md border shadow-md outline-none">
                 {#if value.length >= 1 && open}
                     <SearchResult prompt={value}></SearchResult>

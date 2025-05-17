@@ -7,13 +7,7 @@
     import Tag from "@lucide/svelte/icons/tag";
     import Package from "@lucide/svelte/icons/package";
     import {untrack} from "svelte";
-
-    interface Package {
-        name: string;
-        version: string;
-        description: string;
-        deleted: boolean;
-    }
+    import {ScrollArea} from "$lib/components/ui/scroll-area";
 
     interface Props {
         prompt: string;
@@ -21,7 +15,7 @@
 
     let {prompt}: Props = $props();
 
-    let results = $state<Package[]>([]);
+    let results = $state<search.FindResultElement[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
@@ -40,8 +34,7 @@
         try {
             isLoading = true;
             error = null;
-            const tmp = await search.findPackage(currentPrompt);
-            results = tmp.slice(0, 5); // Ограничение до 5 результатов
+            results = await search.findPackage(currentPrompt);
         } catch (err) {
             error = "Failed to fetch packages";
             results = [];
@@ -64,10 +57,9 @@
     });
 </script>
 
-<!-- Контейнер для результатов -->
-<div class="space-y-2">
+<ScrollArea class="max-h-[50vh] overflow-y-auto">
     {#if isLoading || error}
-        <!-- Скелетон при загрузке или ошибке -->
+        <!-- Skeletons on loading or error -->
         <div
                 class={cn(
                 "flex flex-col p-2 border-b last:border-none transition-colors",
@@ -103,6 +95,7 @@
                     "focus:bg-accent"
                 )}
                     role="option"
+                    aria-selected="false"
                     tabindex="0"
                     aria-label={`Package ${pkg.name}, version ${pkg.version}`}
             >
@@ -123,16 +116,18 @@
                 <div class="mt-1 select-none">
                     {#if !pkg.deleted}
                         <Badge variant="default" class="float-end">
-                            <Tag size={16}/><p class="ml-1">{pkg.version}</p>
+                            <Tag size={16}/>
+                            <p class="ml-1">{pkg.version}</p>
                         </Badge>
                     {/if}
                     {#if pkg.deleted}
                         <Badge variant="destructive" class="float-end mr-2">
-                            <Trash size={16}/> <p class="ml-1"> Sisyphus</p>
+                            <Trash size={16}/>
+                            <p class="ml-1"> Sisyphus</p>
                         </Badge>
                     {/if}
                 </div>
             </div>
         {/each}
     {/if}
-</div>
+</ScrollArea>
