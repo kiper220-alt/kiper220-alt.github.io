@@ -8,7 +8,6 @@
     import Package from "@lucide/svelte/icons/package";
     import {untrack} from "svelte";
 
-    // Интерфейс для результата поиска
     interface Package {
         name: string;
         version: string;
@@ -16,23 +15,20 @@
         deleted: boolean;
     }
 
-    // Интерфейс пропсов
     interface Props {
         prompt: string;
     }
 
-    // Инициализация пропсов
     let {prompt}: Props = $props();
 
-    // Состояние для результатов и статуса загрузки
     let results = $state<Package[]>([]);
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
-    // Таймер для дебаунсинга
+    // Debouncing timer
     let timer: number | undefined;
 
-    // Функция поиска пакетов с обработкой ошибок
+    // Packet search function with error handling
     async function findPackage(currentPrompt: string) {
         if (!currentPrompt.trim()) {
             results = [];
@@ -90,7 +86,7 @@
             {/if}
         </div>
     {:else if results.length === 0 && prompt.trim()}
-        <!-- Сообщение, если нет результатов -->
+        <!-- Message if no results -->
         <div
                 class="flex flex-col p-2 border-b last:border-none text-muted-foreground text-sm"
                 role="status"
@@ -99,7 +95,7 @@
             No packages found for "{prompt}"
         </div>
     {:else if results.length > 0}
-        <!-- Результаты поиска -->
+        <!-- Search results -->
         {#each results as pkg (pkg.name)}
             <div
                     class={cn(

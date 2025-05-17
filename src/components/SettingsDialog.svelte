@@ -13,7 +13,6 @@
     import {branchList, type BranchSettings, defaultBranchSettings} from "./settings";
 
 
-    // Инициализация пропсов
     let {
         branches = $bindable({...defaultBranchSettings}),
     }: BranchSettings = $props();

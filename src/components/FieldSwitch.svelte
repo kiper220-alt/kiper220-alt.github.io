@@ -4,7 +4,6 @@
     import {cn} from "$lib/utils";
     import {nanoid} from "nanoid";
 
-    // Интерфейс пропсов
     interface Props {
         ref?: HTMLInputElement | null;
         checked?: boolean;
@@ -17,7 +16,6 @@
         [key: string]: any;
     }
 
-    // Инициализация пропсов
     let {
         ref = $bindable(null),
         checked = $bindable(false),

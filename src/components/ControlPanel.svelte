@@ -3,7 +3,6 @@
     import SettingsDialog from "./SettingsDialog.svelte";
     import {type BranchSettings, branchList, defaultBranchSettings} from "./settings";
 
-    // Инициализация пропсов
     let {
         branches = $bindable({...defaultBranchSettings}),
     }: BranchSettings = $props();
