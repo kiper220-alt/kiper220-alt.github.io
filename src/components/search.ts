@@ -1,3 +1,4 @@
+import type {SiteFingPackagesModel, SiteFingPackagesPackageModel} from "$rdb/";
 import * as rdb from "$rdb/";
 
 let configuration: rdb.Configuration = new rdb.Configuration({basePath: "https://rdb.altlinux.org/api"});
@@ -21,34 +22,32 @@ export async function findPackage(packageName: string): Promise<FindResultElemen
         return [];
     }
 
-    let packages = findPackageResponse.packages;
-    let result: FindResultElement[] = [];
-
-    for (let a of packages) {
-        if (result.length === 5) {
-            break;
-        }
+    let packages: SiteFingPackagesPackageModel[] = findPackageResponse.packages;
+    return packages.map(a => {
         if (!a.name || !a.versions) {
             throw new Error(`Error while fetching data for "${packageName}"`);
         }
         let tmp = new FindResultElement();
         const index = a.versions.findIndex(a => a.branch == "sisyphus");
 
-        let version;
-        let release;
-        let sisyphus;
+        let sisyphus = "";
         let description: string = "";
         let deleted = false;
 
         if (index === -1) {
-            version = "-";
-            release = "";
             sisyphus = "-";
             deleted = true;
         } else {
-            version = a.versions[index].version;
-            release = a.versions[index].release;
-            sisyphus = version + "-" + release;
+            const version = a.versions[index].version;
+            const release = a.versions[index].release;
+
+            if (version && release) {
+                sisyphus = version + "-" + release;
+            } else if (version || release) {
+                // @ts-ignore
+                sisyphus = (version ? version : release);
+            }
+
             if (a.versions[index].deleted !== undefined) {
                 deleted = a.versions[index].deleted;
             }
@@ -61,8 +60,6 @@ export async function findPackage(packageName: string): Promise<FindResultElemen
         tmp.version = sisyphus ? sisyphus : null;
         tmp.description = description;
         tmp.deleted = deleted;
-        result.push(tmp);
-    }
-
-    return result;
+        return tmp;
+    });
 }
