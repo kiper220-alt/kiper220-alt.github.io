@@ -12,6 +12,7 @@
         disabled?: boolean;
         id?: string | null;
         class?: string;
+        onclick?: (event: MouseEvent) => void;
 
         [key: string]: any;
     }
@@ -24,6 +25,7 @@
         disabled = false,
         id = null,
         class: className = '',
+        onclick = undefined,
         ...restProps
     }: Props = $props();
 
@@ -32,6 +34,9 @@
         event.stopPropagation();
         if (!disabled) {
             checked = !checked;
+        }
+        if (onclick) {
+            onclick(event);
         }
     }
 
@@ -70,5 +75,7 @@
             bind:ref
             class="col-span-3 ml-1"
             disabled={disabled}
+            onclick={clickEvent}
+            tabindex="-1"
     />
 </button>
