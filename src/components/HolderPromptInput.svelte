@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { Input } from "$lib/components/ui/input";
-    import { onMount } from "svelte";
-    import { cn } from "$lib/utils.js";
+    import {Input} from "$lib/components/ui/input";
+    import {onMount} from "svelte";
+    import {cn} from "$lib/utils.js";
 
     let displayedText = $state("");
     let open = $state(false);
@@ -60,10 +60,10 @@
 </script>
 
 <Input
-    {...restProps}
-    bind:this={ref}
-    bind:value
-    class={className}
-    placeholder={displayedText}
-    type="search"
+        {...restProps}
+        bind:this={ref}
+        bind:value
+        class={className}
+        placeholder={displayedText}
+        type="search"
 />
