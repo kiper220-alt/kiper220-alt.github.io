@@ -2,6 +2,14 @@ export interface BranchSettings {
     branches: Record<string, { checked: boolean; disabled?: boolean }>;
 }
 
+export type Settings = {
+    version: number;
+    packages: Record<string, string[]>;
+    branches: string[];
+    dndsort: boolean;
+    tab: number;
+}
+
 export const branchList = [
     {key: "sisyphus", title: "Sisyphus"},
     {key: "sisyphus_e2k", title: "Sisyphus E2K"},
@@ -25,13 +33,13 @@ export const defaultBranchSettings = {
     c9f2: {checked: true},
 }
 
-export type Settings = {
-    version: number;
-    packages: Record<string, string[]>;
-    branches: string[];
-    dndsort: boolean;
-    tab: number;
-}
+export const defaultSettings: Settings = {
+    version: 1,
+    packages: {},
+    branches: branchList.map((a) => a.key),
+    tab: 0,
+    dndsort: true
+};
 
 export function branchListFromList(branches: string[]): BranchSettings {
     let branchSettings: BranchSettings = {branches: defaultBranchSettings};
@@ -45,14 +53,6 @@ export function branchListFromList(branches: string[]): BranchSettings {
 export function tabsFromPackages(packages: Record<string, string[]>): string[] {
     return Array.from(Object.keys(packages));
 }
-
-const defaultSettings: Settings = {
-    version: 1,
-    packages: {},
-    branches: branchList.map((a) => a.key),
-    tab: 0,
-    dndsort: true
-};
 
 function loadSettings(): Settings {
     let str = localStorage.getItem("config");

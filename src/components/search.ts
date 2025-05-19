@@ -1,9 +1,5 @@
 import type {SiteFingPackagesModel, SiteFingPackagesPackageModel} from "$rdb/";
-import * as rdb from "$rdb/";
-
-let configuration: rdb.Configuration = new rdb.Configuration({basePath: "https://rdb.altlinux.org/api"});
-let packageApiInstance: rdb.PackageApi = new rdb.PackageApi(configuration);
-let siteApiInstance: rdb.SiteApi = new rdb.SiteApi(configuration);
+import { siteApiInstance } from "./api.ts";
 
 export class FindResultElement {
     name: string | null = null;
