@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {Button, buttonVariants} from "$lib/components/ui/button";
+    import {buttonVariants} from "$lib/components/ui/button";
     import {Settings} from "@lucide/svelte/icons";
     import * as Dialog from "$lib/components/ui/dialog";
     import {Label} from "$lib/components/ui/label";
@@ -8,7 +8,6 @@
     import FieldSwitch from "./FieldSwitch.svelte";
 
     import {cn} from "$lib/utils";
-    import {ModeWatcher} from "mode-watcher";
     import ThemeButton from "./ThemeButton.svelte";
     import {branchList, type BranchSettings, defaultBranchSettings} from "./settings";
 
