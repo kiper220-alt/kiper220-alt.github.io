@@ -6,11 +6,11 @@
         tabs: string[],
         activeTab: number,
         onadd?: (tab: string) => void,
-        onremove?: (tab: string) => void,
+        onremove?: (index: number, tab: string) => void,
     }
 
     let {
-        tabs = $bindable(["test"]),
+        tabs = $bindable([]),
         activeTab = $bindable(0),
         onadd: onAdd = undefined,
         onremove: onRemove = undefined
@@ -42,15 +42,14 @@
 
     function onremove(e: MouseEvent, index: number) {
         if (onRemove) {
-            onRemove(tabs[index]);
+            onRemove(index, tabs[index]);
         }
-        closeTab(e, index);
     }
 
 </script>
 
-<div class="flex flex-row h-screen items-center overflow-y-auto w-full border-b overflow-x-auto max-h-max">
-    {#each tabs as tab, i (tab + i)}
+<div class="flex flex-row max-h-max items-center overflow-y-auto w-full border-b overflow-x-auto">
+    {#each tabs as tab, i (tab)}
         <button
                 class="flex flex-row items-center min-w-min overflow-hidden overflow-x-auto px-2 py-2 border-r cursor-pointer transition-colors {activeTab === i ? 'bg-accent' : 'hover:bg-secondary'}"
                 type="button"

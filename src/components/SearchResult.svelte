@@ -6,14 +6,16 @@
     import Trash from "@lucide/svelte/icons/trash";
     import Tag from "@lucide/svelte/icons/tag";
     import Package from "@lucide/svelte/icons/package";
-    import {untrack} from "svelte";
     import {ScrollArea} from "$lib/components/ui/scroll-area";
+    import type { PackageGroup } from "./settings.js";
 
     interface Props {
         prompt: string;
-    }
+        packages: PackageGroup[],
+        tab: number,
+    };
 
-    let {prompt}: Props = $props();
+    let {prompt = $bindable(""), packages = $bindable([]), tab}: Props = $props();
 
     let results = $state<search.FindResultElement[]>([]);
     let isLoading = $state(true);
@@ -34,13 +36,23 @@
         try {
             isLoading = true;
             error = null;
-            results = await search.findPackage(currentPrompt);
+            let tmp = await search.findPackage(currentPrompt);
+            tmp = tmp.filter(a => packages[tab].packages.findIndex(b => a.name === b) === -1);
+            results = tmp;
         } catch (err) {
             error = "Failed to fetch packages";
             results = [];
         } finally {
             isLoading = false;
         }
+    }
+
+    function addPackage(name: string, deleted: boolean) {
+        if (deleted) {
+            return;
+        }
+        packages[tab].packages.push(name);
+        prompt = "";
     }
 
     // Эффект для дебаунсинга поиска
@@ -89,14 +101,15 @@
     {:else if results.length > 0}
         <!-- Search results -->
         {#each results as pkg (pkg.name)}
-            <div
+            <button
                     class={cn(
-                    "flex flex-col p-2 border-b last:border-none cursor-pointer transition-colors hover:bg-accent",
+                    "flex flex-col p-2 w-full text-left border-b last:border-none cursor-pointer transition-colors hover:bg-accent",
                     "focus:bg-accent"
                 )}
                     role="option"
                     aria-selected="false"
                     tabindex="0"
+                    onclick={() => addPackage(pkg.name, pkg.deleted)}
                     aria-label={`Package ${pkg.name}, version ${pkg.version}`}
             >
                 <div class="font-semibold text-sm select-none flex flex-row">
@@ -127,7 +140,7 @@
                         </Badge>
                     {/if}
                 </div>
-            </div>
+            </button>
         {/each}
     {/if}
 </ScrollArea>

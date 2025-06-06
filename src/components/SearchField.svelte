@@ -6,13 +6,13 @@
     import SearchResult from "$components/SearchResult.svelte";
     import HolderPromptInput from "./HolderPromptInput.svelte";
 
-    let open = $state(false);
-
     let {
         ref = $bindable(null),
         type_speed = $bindable(40),
         word_speed = $bindable(5000),
         value = $bindable(''),
+        packages = $bindable([]),
+        tab = 0,
         class: className = "",
         ...restProps
     } = $props();
@@ -25,13 +25,7 @@
         "oneko", "kitty", "neovim", "LibreOffice", "d-feet"
     ];
 
-    $effect(() => {
-        if (value.length === 0 && open) {
-            open = false;
-        } else if (value.length >= 1 && !open) {
-            open = true;
-        }
-    });
+    let open = $derived(value.length >= 1);
 
     function escapeEvent(event: KeyboardEvent) {
         if (event.key === "Escape") {
@@ -49,7 +43,7 @@
         <div class="h-0 sm:w-[500px] z-20 lg:w-[700px] relative top-1">
             <div class="bg-popover text-popover-foreground min-h-5 rounded-md border shadow-md outline-none">
                 {#if value.length >= 1 && open}
-                    <SearchResult prompt={value}></SearchResult>
+                    <SearchResult bind:packages={packages} {tab} bind:prompt={value}></SearchResult>
                 {/if}
             </div>
         </div>

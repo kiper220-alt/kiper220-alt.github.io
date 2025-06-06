@@ -2,52 +2,64 @@ export interface BranchSettings {
     branches: Record<string, { checked: boolean; disabled?: boolean }>;
 }
 
+export type PackageGroup = {
+    name: string;
+    packages: string[];
+};
+
 export type Settings = {
     version: number;
-    packages: Record<string, string[]>;
+    groups: PackageGroup[];
     branches: string[];
     dndsort: boolean;
+    tab: number;
+}
+
+type OldSettings = {
+    packages: [string, string[]][];
     tab: number;
 }
 
 export const branchList = [
     {key: "sisyphus", title: "Sisyphus"},
     {key: "sisyphus_e2k", title: "Sisyphus E2K"},
-    {key: "sisyphus_loongarch", title: "Sisyphus LoongArch"},
+    {key: "sisyphus_riscv64", title: "Sisyphus RiscV64"},
+    {key: "sisyphus_loongarch64", title: "Sisyphus LoongArch64"},
     {key: "p11", title: "P11"},
     {key: "p10", title: "P10"},
     {key: "p10_e2k", title: "P10 E2K"},
-    {key: "p9", title: "P9"},
     {key: "c10f2", title: "C10F2"},
 ];
 
 export const defaultBranchSettings = {
-    sisyphus: {checked: true, disabled: true},
-    sisyphus_e2k: {checked: true},
-    sisyphus_loongarch: {checked: true},
-    p11: {checked: true},
-    p10: {checked: true},
-    p10_e2k: {checked: true},
-    p9: {checked: true},
-    c10f2: {checked: true},
-    c9f2: {checked: true},
+    ...branchList.map((a) => a.key).reduce((acc, a) => ({...acc, [a]: {checked: true, disabled: a === "sisyphus"}}), {})
 }
 
 export const defaultSettings: Settings = {
     version: 1,
-    packages: {},
+    groups: [],
     branches: branchList.map((a) => a.key),
     tab: 0,
     dndsort: true
 };
 
-export function branchListFromList(branches: string[]): BranchSettings {
+export function branchSettingsFromList(branches: string[]): BranchSettings {
     let branchSettings: BranchSettings = {branches: defaultBranchSettings};
     for (let i in branchList) {
         const branch = branchList[i].key;
         branchSettings.branches[branch].checked = branches.findIndex(a => a === branch) !== -1;
     }
     return branchSettings;
+}
+
+export function listFromBranchSettings(branches: BranchSettings): string[] {
+    let list: string[] = [];
+    for (let i in branches.branches) {
+        if (branches.branches[i].checked) {
+            list.push(i);
+        }
+    }
+    return list;
 }
 
 export function tabsFromPackages(packages: Record<string, string[]>): string[] {
@@ -70,10 +82,10 @@ function loadSettings(): Settings {
     if ((config as Settings).version === undefined) {
         return {
             version: 1,
-            packages: c_config.packages,
+            groups: (config as OldSettings).packages.map((a) => ({name: a[0], packages: a[1]})),
             branches: defaultSettings.branches,
-            dndsort: c_config.dndsort,
-            tab: c_config.tab
+            dndsort: defaultSettings.dndsort,
+            tab: (config as OldSettings).tab
         };
     }
 
@@ -82,7 +94,7 @@ function loadSettings(): Settings {
     }
     return {
         version: c_config.version,
-        packages: c_config.packages,
+        groups: c_config.groups,
         branches: c_config.branches,
         dndsort: c_config.dndsort,
         tab: c_config.tab
@@ -92,7 +104,7 @@ function loadSettings(): Settings {
 function saveSettings(settings: Settings) {
     localStorage.setItem("config", JSON.stringify({
         version: settings.version,
-        packages: settings.packages,
+        groups: settings.groups,
         branches: settings.branches,
         dndsort: settings.dndsort,
         tab: settings.tab
@@ -100,51 +112,40 @@ function saveSettings(settings: Settings) {
 }
 
 
-export function setPackages(group: string, packages: string[]): void {
-    settings.packages[group] = packages;
-    changed = true;
-}
+export function setGroups(groups: PackageGroup[]): void {
+    if (groups === settings.groups) {
+        return;
+    }
 
-export function removeGroup(group: string): void {
-    delete settings.packages[group];
-    changed = true;
-}
-
-export function addGroup(group: string): void {
-    console.log("addGroup", group);
-    settings.packages[group] = [];
-    changed = true;
+    settings.groups = groups;
+    saveSettings(settings);
 }
 
 export function changeBranches(branches: string[]): void {
-    if (branches !== settings.branches) {
-        settings.branches = branches;
-        changed = true;
+    if (branches === settings.branches) {
+        return;
     }
+
+    settings.branches = branches;
+    saveSettings(settings);
 }
 
 export function changeTab(tab: number): void {
-    if (tab !== settings.tab) {
-        settings.tab = tab;
-        changed = true;
+    if (tab === settings.tab) {
+        return;
     }
+
+    settings.tab = tab;
+    saveSettings(settings);
 }
 
 export function setDndSort(sort: boolean): void {
-    if (sort !== settings.dndsort) {
-        settings.dndsort = sort;
-        changed = true;
+    if (sort === settings.dndsort) {
+        return;
     }
-}
 
-function saveInterval(): void {
-    if (changed) {
-        changed = false;
-        saveSettings(settings);
-    }
+    settings.dndsort = sort;
+    saveSettings(settings);
 }
 
 export let settings: Settings = loadSettings();
-let changed: boolean = false;
-
-setInterval(saveInterval, 2000);
