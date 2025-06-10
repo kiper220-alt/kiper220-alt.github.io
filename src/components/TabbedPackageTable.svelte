@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { stopPropagation } from "svelte/legacy";
     import PackageTable from "./PackageTable.svelte";
     import type { PackageGroup } from "./settings";
     import Tabs from "./Tabs.svelte";
@@ -7,25 +8,33 @@
         packages: PackageGroup[];
         branches: string[];
         tab: number;
+        dndSort: boolean;
     }
 
     let {
         packages = $bindable([]),
         branches = [],
-        tab = $bindable(0)
+        tab = $bindable(0),
+        dndSort = true,
     }: Props = $props();
 
-    function onadd(name: string) {
-        packages = [...packages, {name, packages: []}];
+    let groupNames = $derived(packages.map(p => p.name));
+
+    function onadd(name: string, pkgs: string[]) {
+        packages.push({name, packages: pkgs});
     }
 
     function onremove(index: number, _: string) {
-        packages = [...packages.slice(0, index), ...packages.slice(index + 1)];
+        if (tab >= index) {
+            tab = Math.max(tab - 1, 0);
+        }
+        packages.splice(index, 1);
     }
 
+    $inspect(packages);
 </script>
 
-<Tabs tabs={packages.map(p => p.name)} bind:activeTab={tab} {onadd} {onremove}/>
+<Tabs tabs={groupNames} bind:activeTab={tab} {onadd} {onremove} class="flex-shrink-0"/>
 {#if packages.length !== 0}
-<PackageTable branches={branches} bind:packages={packages[tab].packages}/>
+<PackageTable branches={branches} {dndSort} bind:packages={packages[tab].packages}/>
 {/if}
