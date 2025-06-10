@@ -7,11 +7,10 @@
     import Tag from "@lucide/svelte/icons/tag";
     import Package from "@lucide/svelte/icons/package";
     import {ScrollArea} from "$lib/components/ui/scroll-area";
-    import type { PackageGroup } from "./settings.js";
 
     interface Props {
         prompt: string;
-        packages: PackageGroup[],
+        packages: string[],
         tab: number,
     };
 
@@ -21,8 +20,6 @@
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
-    // Debouncing timer
-    let timer: number | undefined;
 
     // Packet search function with error handling
     async function findPackage(currentPrompt: string) {
@@ -37,7 +34,7 @@
             isLoading = true;
             error = null;
             let tmp = await search.findPackage(currentPrompt);
-            tmp = tmp.filter(a => packages[tab].packages.findIndex(b => a.name === b) === -1);
+            tmp = tmp.filter(a => packages.findIndex(b => a.name === b) === -1);
             results = tmp;
         } catch (err) {
             error = "Failed to fetch packages";
@@ -51,20 +48,18 @@
         if (deleted) {
             return;
         }
-        packages[tab].packages.push(name);
+        packages.push(name);
         prompt = "";
     }
 
     // Эффект для дебаунсинга поиска
     $effect(() => {
         const fix = prompt;
-        timer = setTimeout(() => findPackage(fix), 1000);
+        let timer: number = setTimeout(() => findPackage(fix), 1000);
 
         // Очистка при уничтожении компонента
         return () => {
-            if (timer !== undefined) {
-                clearTimeout(timer);
-            }
+            clearTimeout(timer);
         };
     });
 </script>
@@ -104,7 +99,7 @@
             <button
                     class={cn(
                     "flex flex-col p-2 w-full text-left border-b last:border-none cursor-pointer transition-colors hover:bg-accent",
-                    "focus:bg-accent"
+                    pkg.deleted ? "opacity-50 cursor-not-allowed" : "focus:bg-accent"
                 )}
                     role="option"
                     aria-selected="false"
