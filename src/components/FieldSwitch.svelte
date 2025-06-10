@@ -56,7 +56,7 @@
         <div class="space-y-0.5 text-left">
             {#if title}
                 <Label
-                        class="text-sm font-medium pointer-events-none"
+                        class={cn("text-sm font-medium pointer-events-none", disabled ? "text-muted-foreground" : "")}
                 >
                     {title}
                 </Label>
@@ -76,6 +76,6 @@
             class="col-span-3 ml-1"
             disabled={disabled}
             onclick={clickEvent}
-            tabindex="-1"
+            tabindex={-1}
     />
 </button>
