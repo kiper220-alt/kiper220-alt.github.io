@@ -22,7 +22,8 @@
         "gpui", "samba", "firefox", "portproton-installer",
         "kubernetes", "gnome3", "gdm", "qt-creator",
         "gcc", "llvm", "rust", "zig", "thunderbird",
-        "oneko", "kitty", "neovim", "LibreOffice", "d-feet"
+        "oneko", "kitty", "neovim", "LibreOffice", "d-feet",
+        "alterator-auth", "alterator-manager", "alterator-module-executor",
     ];
 
     let open = $derived(value.length >= 1);
