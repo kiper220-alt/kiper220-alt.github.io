@@ -1,6 +1,6 @@
 <script lang="ts">
     import {buttonVariants} from "$lib/components/ui/button";
-    import {Settings} from "@lucide/svelte/icons";
+    import {Download, Settings, Upload} from "@lucide/svelte/icons";
     import * as Dialog from "$lib/components/ui/dialog";
     import {Label} from "$lib/components/ui/label";
     import {Separator} from "$lib/components/ui/separator";
@@ -9,17 +9,25 @@
 
     import {cn} from "$lib/utils";
     import ThemeButton from "./ThemeButton.svelte";
-    import {branchList, type BranchSettings, defaultBranchSettings} from "./settings";
+    import {branchList, type BranchSettings, defaultBranchSettings, loadFrom, saveAs} from "./settings";
+    import Button from "$lib/components/ui/button/button.svelte";
+    import Input from "$lib/components/ui/input/input.svelte";
 
     interface Props {
         branches: BranchSettings;
         dndSort: boolean;
     }
 
+    let InputElement: HTMLInputElement;
+
     let {
         branches = $bindable({branches: defaultBranchSettings}),
         dndSort = $bindable(true),
     }: Props = $props();
+
+    function onClickLoad() {
+        InputElement.click();
+    }
 
 </script>
 
@@ -67,6 +75,14 @@
                                 disabled={branches.branches[key].disabled ?? false}
                         />
                     {/each}
+                </div>
+            </section>
+            <section class="p-4 space-y-4">
+                <Label class="text-base font-semibold">Configuration:</Label>
+                <div class="grid grid-cols-2 gap-2">
+                    <input class="hidden" type="file" accept=".json" bind:this={InputElement} onchange={a => loadFrom(a)}/>
+                    <Button variant="outline" onclick={onClickLoad}>Load <Upload size="12"/></Button>
+                    <Button variant="outline" onclick={() => saveAs("configuration.json")}>Save <Download size="12"/></Button>
                 </div>
             </section>
         </ScrollArea>

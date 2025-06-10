@@ -1,3 +1,5 @@
+import type { FileInput } from "@lucide/svelte";
+
 export interface BranchSettings {
     branches: Record<string, { checked: boolean; disabled?: boolean }>;
 }
@@ -42,6 +44,10 @@ export const defaultSettings: Settings = {
     tab: 0,
     dndsort: true
 };
+
+export function fetchDefaultPackages(): Promise<string[]> {
+    return fetch("/default.json").then((response) => response.json()).then((data) => data.data);
+}
 
 export function branchSettingsFromList(branches: string[]): BranchSettings {
     let branchSettings: BranchSettings = {branches: defaultBranchSettings};
@@ -146,6 +152,57 @@ export function setDndSort(sort: boolean): void {
 
     settings.dndsort = sort;
     saveSettings(settings);
+}
+
+export function saveAs(filename: string) {
+    const blob = new Blob([JSON.stringify({
+        version: settings.version,
+        groups: settings.groups,
+        branches: settings.branches,
+        dndsort: settings.dndsort,
+        tab: settings.tab
+    })], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+export function loadFrom(a: Event & {currentTarget: EventTarget & HTMLInputElement;}) {
+    // @ts-ignore
+    const file = a.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            const contents = e.target?.result as string;
+            try {
+                const json = JSON.parse(contents);
+                settings = {
+                    version: json.version,
+                    groups: json.groups,
+                    branches: json.branches,
+                    dndsort: json.dndsort,
+                    tab: json.tab
+                }
+                saveSettings(settings);
+                document.location.reload();
+            } catch (error) {
+                console.error('Error while parsing JSON file:', error);
+            }
+            // @ts-ignore
+            a.target.value = '';
+        };
+        reader.onerror = () => {
+            console.error('Error while reading JSON file: ', file);
+        };
+
+        reader.readAsText(file);
+    }
 }
 
 export let settings: Settings = loadSettings();
