@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { stopPropagation } from "svelte/legacy";
     import PackageTable from "./PackageTable.svelte";
     import type { PackageGroup } from "./settings";
     import Tabs from "./Tabs.svelte";
@@ -31,10 +30,14 @@
         packages.splice(index, 1);
     }
 
-    $inspect(packages);
+    function onrerange(old_position: number, new_position: number) {
+        const temp = packages[old_position];
+        packages[old_position] = packages[new_position];
+        packages[new_position] = temp;
+    }
 </script>
 
-<Tabs tabs={groupNames} bind:activeTab={tab} {onadd} {onremove} class="flex-shrink-0"/>
+<Tabs tabs={groupNames} bind:activeTab={tab} {onadd} {onrerange} {onremove} class="flex-shrink-0"/>
 {#if packages.length !== 0}
 <PackageTable branches={branches} {dndSort} bind:packages={packages[tab].packages}/>
 {/if}
