@@ -4,6 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
@@ -20,6 +22,7 @@
     "bits-ui": "^1.4.7",
     "clsx": "^2.1.1",
     "formsnap": "^2.0.1",
+    "gh-pages": "^6.3.0",
     "svelte": "^5.28.1",
     "svelte-check": "^4.1.6",
     "sveltekit-superforms": "^2.25.0",
