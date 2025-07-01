@@ -2,6 +2,7 @@
     import X from "@lucide/svelte/icons/x";
     import AddButton from "$components/AddButton.svelte";
     import { cn } from "$lib/utils";
+    import type { KeyboardEventHandler } from "svelte/elements";
 
     interface Props {
         tabs: string[],
@@ -73,6 +74,16 @@
         hoverIndex = null;
     }
 
+    function onKeyDown(e: KeyboardEvent & { currentTarget: EventTarget & Window; }) {
+        if (e.code.slice(0, 5) === "Digit") {
+            let index = parseInt(e.code.slice(5)) - 1;
+            if (index < 0) index = 10;
+
+            if (index >= 0 && index < tabs.length) {
+                activeTab = index;
+            }
+        }
+	}
 </script>
 
 <div class={cn("flex flex-row max-h-max items-center overflow-y-auto w-full border-b overflow-x-auto", className)}>
@@ -114,3 +125,4 @@
             variant="default"
     />
 </div>
+<svelte:window on:keydown={onKeyDown}/>
