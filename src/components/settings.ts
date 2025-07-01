@@ -123,7 +123,7 @@ export function setGroups(groups: PackageGroup[]): void {
         return;
     }
 
-    settings.groups = groups;
+    settings.groups = [...groups];
     saveSettings(settings);
 }
 
@@ -132,7 +132,7 @@ export function changeBranches(branches: string[]): void {
         return;
     }
 
-    settings.branches = branches;
+    settings.branches = [...branches];
     saveSettings(settings);
 }
 
