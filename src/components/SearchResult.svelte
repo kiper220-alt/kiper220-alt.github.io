@@ -10,7 +10,7 @@
     import { ResponseError } from "$rdb/runtime.js";
 
     interface Props {
-        prompt: string;
+        prompt: string,
         packages: string[],
         tab: number,
     };
