@@ -68,7 +68,7 @@
     });
 </script>
 
-<ScrollArea class="max-h-[50vh] overflow-y-auto">
+<ScrollArea class="max-h-[50vh] overflow-y-auto" tabindex={-1}>
     {#if isLoading || error}
         <!-- Skeletons on loading or error -->
         <div
