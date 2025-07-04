@@ -112,7 +112,6 @@
         draggedIndex = null;
         hoverIndex = null;
         if (packages != packageOrder) {
-            console.log("replace");
             packages = packageOrder;
         }
     }
@@ -202,7 +201,7 @@
                             class="grip cursor-move flex items-center justify-center"
                             role="button"
                             aria-label="Drag to reorder row"
-                            tabindex="0"
+                            tabindex={-1}
                     >
                         <EllipsisVertical/>
                     </div>

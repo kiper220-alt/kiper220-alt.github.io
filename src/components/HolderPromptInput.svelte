@@ -61,7 +61,7 @@
 
 <Input
         {...restProps}
-        bind:this={ref}
+        bind:ref={ref}
         bind:value
         class={className}
         placeholder={displayedText}

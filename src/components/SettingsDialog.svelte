@@ -53,7 +53,7 @@
             </Dialog.Description>
         </Dialog.Header>
 
-        <ScrollArea class="flex-1 overflow-y-auto">
+        <ScrollArea class="flex-1 overflow-y-auto" tabindex={-1}>
             <section class="p-4 space-y-2">
                 <Label class="text-base font-semibold">Visual</Label>
                 <FieldSwitch

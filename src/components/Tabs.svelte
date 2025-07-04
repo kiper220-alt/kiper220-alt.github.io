@@ -75,7 +75,7 @@
     }
 
     function onKeyDown(e: KeyboardEvent & { currentTarget: EventTarget & Window; }) {
-        if (e.code.slice(0, 5) === "Digit") {
+        if ((e.altKey || e.ctrlKey) && e.code.slice(0, 5) === "Digit") {
             let index = parseInt(e.code.slice(5)) - 1;
             if (index < 0) index = 10;
 
