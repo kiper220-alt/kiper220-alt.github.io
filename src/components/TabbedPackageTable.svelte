@@ -39,11 +39,11 @@
         packages[new_position] = temp;
     }
 </script>
-<div class="flex items-center shrink-0 justify-stretch border-b gap-2 w-screen overflow-hidden flex-row">
+<div class="flex items-center shrink-0 justify-stretch border-b gap-2 w-screen flex-row">
     <SettingsDialog bind:branches={branches} bind:dndSort={dndSort}/>
     <Tabs tabs={groupNames} bind:activeTab={tab} {onadd} {onrerange} {onremove} class="flex-shrink-0"/>
     {#if groupNames.length !== 0}
-        <SearchField branches={branchList} bind:packages={packages}/>
+        <SearchField branches={branchList} bind:packages={packages[tab].packages}/>
     {/if}
 </div>
 {#if packages.length !== 0}
