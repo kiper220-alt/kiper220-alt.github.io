@@ -86,7 +86,7 @@
 	}
 </script>
 
-<div class={cn("flex flex-row max-h-max items-center overflow-y-auto w-full border-b overflow-x-auto", className)}>
+<div class={cn("flex flex-row max-h-max items-center overflow-y-auto overflow-x-auto grow shrink no-scrollbar", className)}>
     {#each tabs as tab, i (tab)}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div
