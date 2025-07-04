@@ -7,6 +7,7 @@
     import Tag from "@lucide/svelte/icons/tag";
     import Package from "@lucide/svelte/icons/package";
     import {ScrollArea} from "$lib/components/ui/scroll-area";
+    import { ResponseError } from "$rdb/runtime.js";
 
     interface Props {
         prompt: string;
@@ -17,6 +18,7 @@
     let {prompt = $bindable(""), packages = $bindable([]), tab}: Props = $props();
 
     let results = $state<search.FindResultElement[]>([]);
+    let filteredResults = $derived(results.filter(a => packages.findIndex(b => a.name === b) === -1));
     let isLoading = $state(true);
     let error = $state<string | null>(null);
 
@@ -33,11 +35,13 @@
         try {
             isLoading = true;
             error = null;
-            let tmp = await search.findPackage(currentPrompt);
-            tmp = tmp.filter(a => packages.findIndex(b => a.name === b) === -1);
-            results = tmp;
-        } catch (err) {
+            results = await search.findPackage(currentPrompt);
+        } catch (err: unknown | Error) {
             error = "Failed to fetch packages";
+            if (err instanceof ResponseError) {
+                const json = await err.response.json();
+                error = json.error;
+            }
             results = [];
         } finally {
             isLoading = false;
@@ -84,7 +88,7 @@
                 <p class="text-red-500 text-xs mt-1">{error}</p>
             {/if}
         </div>
-    {:else if results.length === 0 && prompt.trim()}
+    {:else if filteredResults.length === 0 && prompt.trim()}
         <!-- Message if no results -->
         <div
                 class="flex flex-col p-2 border-b last:border-none text-muted-foreground text-sm"
@@ -93,9 +97,9 @@
         >
             No packages found for "{prompt}"
         </div>
-    {:else if results.length > 0}
+    {:else if filteredResults.length > 0}
         <!-- Search results -->
-        {#each results as pkg (pkg.name)}
+        {#each filteredResults as pkg (pkg.name)}
             <button
                     class={cn(
                     "flex flex-col p-2 w-full text-left border-b last:border-none cursor-pointer transition-colors hover:bg-accent",
