@@ -112,7 +112,6 @@
         draggedIndex = null;
         hoverIndex = null;
         if (packages != packageOrder) {
-            console.log("replace");
             packages = packageOrder;
         }
     }
