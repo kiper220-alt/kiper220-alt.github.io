@@ -51,7 +51,7 @@
             class="p-1 px-3 border-l border-t border-b flex bg-primary text-primary-foreground items-center outline-offset-[-3px] outline-4 outline-primary rounded-l-full">
             <Search size={16}/>
         </button>
-        <HolderPromptInput bind:ref={inputElement} bind:value={value} class="h-9 rounded-l-none sm:w-[500px] lg:w-[700px]" onkeydown={escapeEvent}
+        <HolderPromptInput bind:ref={inputElement} bind:value={value} class="h-9 rounded-l-none md:w-[500px] lg:w-[700px]" onkeydown={escapeEvent}
         prompts={randomData}/>
     </div>
     {#if open}
