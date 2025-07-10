@@ -1,5 +1,3 @@
-import type { FileInput } from "@lucide/svelte";
-
 export interface BranchSettings {
     branches: Record<string, { checked: boolean; disabled?: boolean }>;
 }
@@ -187,7 +185,7 @@ export function saveAs(filename: string) {
     URL.revokeObjectURL(url);
 }
 
-export function loadFrom(a: Event & {currentTarget: EventTarget & HTMLInputElement;}) {
+export function loadFrom(a: Event & { currentTarget: EventTarget & HTMLInputElement; }) {
     // @ts-ignore
     const file = a.target.files?.[0];
     if (file) {
