@@ -44,7 +44,7 @@
     });
 
     function buttonIgnore(name: string): boolean {
-        return ignore.findIndex(a => a == name.trim()) !== -1;
+        return name.trim().length === 0 || ignore.findIndex(a => a == name.trim()) !== -1;
     }
 
     function enterEvent(event: KeyboardEvent) {
