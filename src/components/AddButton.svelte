@@ -86,6 +86,26 @@
         return;
     }
 
+    function changeName(index: number) {
+        if (defaultsConf === undefined) {
+            return;
+        }
+
+        if (defaultsPicked[index]) {
+            if (name.trim().length === 0) {
+                name = defaultsConf.groups[index].name;
+            }
+        } else if (name === defaultsConf.groups[index].name) {
+            name = "";
+            for (let j = 0; j <= defaultsPicked.length; j++) {
+                if (defaultsPicked[j]) {
+                    name = defaultsConf.groups[j].name;
+                }
+            }
+        }
+    }
+
+
 </script>
 
 <Dialog.Root bind:open={open}>
