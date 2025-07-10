@@ -146,7 +146,7 @@
                             <FieldSwitch
                                     id="groups-{group.name}"
                                     class="px-4 py-2"
-                                    title="{group.name}"
+                                    title={group.name}
                                     bind:checked={defaultsPicked[i]}
                                     onclick={a => changeName(i)}
                             />
