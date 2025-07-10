@@ -45,8 +45,23 @@ export const defaultSettings: Settings = {
     dndsort: true
 };
 
-export function fetchDefaultPackages(): Promise<string[]> {
-    return fetch("/default.json").then((response) => response.json()).then((data) => data.data);
+
+export type DefaultsPackageGroups = {
+    name: string;
+    packages: string[];
+};
+export type DefaultsConfiguration = {
+    version: number;
+    groups: DefaultsPackageGroups[];
+};
+
+let fetchedConfiguration: Promise<DefaultsConfiguration> | undefined = undefined;
+
+export async function fetchDefaultConfigration(): Promise<DefaultsConfiguration> {
+    if (!fetchedConfiguration) {
+        fetchedConfiguration = fetch("/default.json").then((r) => r.json());
+    }
+    return fetchedConfiguration;
 }
 
 export function branchSettingsFromList(branches: string[]): BranchSettings {
