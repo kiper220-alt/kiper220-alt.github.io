@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {slide} from "svelte/transition";
+    import {blur, fade} from "svelte/transition";
     import {Button, buttonVariants} from "$lib/components/ui/button";
     import {Label} from "$lib/components/ui/label";
     import {Input} from "$lib/components/ui/input";
@@ -98,12 +98,19 @@
             <Dialog.Title>Add Profile</Dialog.Title>
         </Dialog.Header>
         <Label for="name">Profile Name</Label>
-        <HolderPromptInput bind:value={name} id="name" onkeydown={enterEvent}
-                           prompts={["default", "ADMX", "DC", "Group Policies"]}
-                           type="text"/>
         <div>
+            <HolderPromptInput bind:value={name} id="name" onkeydown={enterEvent}
+                               prompts={["default", "ADMX", "DC", "Group Policies"]}
+                               type="text"/>
             {#if disabled}
-                <p class="text-red-500 text-xs" transition:slide>this name is taken</p>
+                <p out:blur in:fade
+                   class="text-red-500 text-xs ml-2 p-1 mt-[-1em] mb-[-1em] pointer-events-none bg-background max-w-min text-nowrap rounded-lg">
+                    {#if name.length === 0}
+                        empty name is not allowed
+                    {:else}
+                        this name is taken
+                    {/if}
+                </p>
             {/if}
         </div>
         <Dialog.Footer>
