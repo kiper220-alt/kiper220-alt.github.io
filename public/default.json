@@ -1,23 +1,59 @@
 {
-  "data": [
-    "gpui",
-    "local-policy",
-    "libdomain",
-    "admc",
-    "gpupdate",
-    "oddjob-gpupdate",
-    "samba",
-    "sssd",
-    "freeipa",
-    "alterator-auth",
-    "alterator-manager",
-    "alterator-module-executor",
-    "alterator-explorer",
-    "alteratorctl",
-    "adt",
-    "admx-basealt",
-    "admx-chromium",
-    "admx-firefox",
-    "admx-yandex-browser"
+  "version": 1,
+  "groups": [
+    {
+      "name": "alt-domain",
+      "packages": [
+        "samba",
+        "samba-winbind-dnsupdate",
+        "sssd",
+        "alterator-auth",
+        "admc",
+        "gpui",
+        "gpresult",
+        "oddjob-gpupdate",
+        "freeipa",
+        "libtdb",
+        "gpupdate",
+        "admx-basealt",
+        "admx-firefox",
+        "admx-chromium",
+        "admx-thunderbird",
+        "admx-yandex-browser",
+        "local-policy"
+      ]
+    },
+    {
+      "name": "alterator",
+      "packages": [
+        "alterator-entry",
+        "alterator-manager",
+        "alterator-module-remote",
+        "alterator-module-backend3",
+        "alterator-module-executor",
+        "alterator-interface-diag",
+        "alterator-interface-edition",
+        "alterator-interface-service",
+        "alterator-interface-component",
+        "alterator-interface-application",
+        "alterator-backend-categories",
+        "alterator-backend-component_categories",
+        "alterator-backend-legacy",
+        "alterator-backend-packages",
+        "alterator-backend-systeminfo",
+        "alterator-backend-batch-components",
+        "alterator-backend-batch-component_categories",
+        "alterator-explorer",
+        "alteratorctl",
+        "alt-components-base",
+        "alterator-application-packages",
+        "alterator-application-services",
+        "alterator-application-components",
+        "alterator-application-systeminfo",
+        "alt-services",
+        "adt",
+        "python3-module-alterator"
+      ]
+    }
   ]
 }

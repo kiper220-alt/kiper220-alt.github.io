@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {slide} from "svelte/transition";
+    import {blur, fade} from "svelte/transition";
     import {Button, buttonVariants} from "$lib/components/ui/button";
     import {Label} from "$lib/components/ui/label";
     import {Input} from "$lib/components/ui/input";
@@ -8,8 +8,8 @@
     import * as Dialog from "$lib/components/ui/dialog";
     import HolderPromptInput from "./HolderPromptInput.svelte";
     import FieldSwitch from "./FieldSwitch.svelte";
-    import { fetchDefaultPackages } from "./settings";
-    import type { EscapeBehaviorType } from "node_modules/bits-ui/dist/bits/utilities/escape-layer/types";
+    import {type DefaultsConfiguration, fetchDefaultConfigration} from "./settings";
+    import {Skeleton} from "$lib/components/ui/skeleton";
 
     interface Props {
         open: boolean;
@@ -31,12 +31,20 @@
     let name = $state("");
     let disabled = $derived(buttonIgnore(name));
     let exist = $derived(!(!name || name === "" || name.trim().length === 0));
-    let isDefaultPackages = $state(false);
-    let isLoadingState = $state(false);
-    let closeBehavior : EscapeBehaviorType = $derived(isLoadingState ? "ignore" : "close" );
+    let defaultsConf: DefaultsConfiguration | undefined = $state(undefined);
+    let defaultsPicked: boolean[] = $state([]);
+
+    $effect(() => {
+        if (open) {
+            for (let i in defaultsPicked) {
+                defaultsPicked[i] = false;
+            }
+            name = "";
+        }
+    });
 
     function buttonIgnore(name: string): boolean {
-        return ignore.findIndex(a => a == name.trim()) !== -1;
+        return name.trim().length === 0 || ignore.findIndex(a => a == name.trim()) !== -1;
     }
 
     function enterEvent(event: KeyboardEvent) {
@@ -48,69 +56,107 @@
         }
     }
 
+    function load_configuration() {
+        if (defaultsConf === undefined) {
+            let tmp = fetchDefaultConfigration();
+            tmp.then(a => {
+                for (let i = defaultsPicked.length; i < a.groups.length; i++) {
+                    defaultsPicked.push(false);
+                }
+                defaultsConf = a;
+            });
+        }
+    }
+
     function onclick() {
         if (!onadd) {
             open = false;
             return;
         }
-        if (!isDefaultPackages) {
-            onadd(name.trim(), []);
-            open = false;
+        let packages: string[] = [];
+        if (defaultsConf) {
+            for (let i in defaultsPicked) {
+                if (defaultsPicked[i]) {
+                    packages = [...packages, ...defaultsConf.groups[i].packages];
+                }
+            }
+        }
+        onadd(name.trim(), [...new Set(packages)]);
+        open = false;
+        return;
+    }
+
+    function changeName(index: number) {
+        if (defaultsConf === undefined) {
             return;
         }
-        isLoadingState = true;
-        fetchDefaultPackages().then((packages) => {
-            isLoadingState = false;
-            onadd(name.trim(), packages);
-            isDefaultPackages = false;
-            open = false;
-        }).catch((err) => {
-            isLoadingState = false;
-            isDefaultPackages = false;
-            console.error(err);
-        })
+
+        if (defaultsPicked[index]) {
+            if (name.trim().length === 0) {
+                name = defaultsConf.groups[index].name;
+            }
+        } else if (name === defaultsConf.groups[index].name) {
+            name = "";
+            for (let j = 0; j <= defaultsPicked.length; j++) {
+                if (defaultsPicked[j]) {
+                    name = defaultsConf.groups[j].name;
+                }
+            }
+        }
     }
+
 
 </script>
 
 <Dialog.Root bind:open={open}>
-    <Dialog.Trigger {...restProps} class={cn(buttonVariants({variant: variant, size:"icon"}), className)}>
+    <Dialog.Trigger {...restProps} class={cn(buttonVariants({variant: variant, size:"icon"}), className)}
+                    onclick={load_configuration}>
         <Plus/>
     </Dialog.Trigger>
-    <Dialog.Content interactOutsideBehavior={closeBehavior} escapeKeydownBehavior={closeBehavior}>
-        {#if !isLoadingState}
+    <Dialog.Content>
         <Dialog.Header>
             <Dialog.Title>Add Profile</Dialog.Title>
         </Dialog.Header>
         <Label for="name">Profile Name</Label>
-        <HolderPromptInput bind:value={name} id="name" onkeydown={enterEvent}
-                           prompts={["default", "ADMX", "DC", "Group Policies"]}
-                           type="text"/>
         <div>
+            <HolderPromptInput bind:value={name} id="name" onkeydown={enterEvent}
+                               prompts={["default", "ADMX", "DC", "Group Policies"]}
+                               type="text"/>
             {#if disabled}
-                <p class="text-red-500 text-xs" transition:slide>this name is taken</p>
+                <p out:blur in:fade
+                   class="text-red-500 text-xs ml-2 p-1 mt-[-1em] mb-[-1em] pointer-events-none bg-background max-w-min text-nowrap rounded-lg">
+                    {#if name.length === 0}
+                        empty name is not allowed
+                    {:else}
+                        this name is taken
+                    {/if}
+                </p>
             {/if}
         </div>
         <Dialog.Footer>
-            {#if exist}
-                <div transition:slide class="flex flex-row w-full space-x-2 items-center">
-                    <FieldSwitch
-                            class="px-4 py-2"
-                            title="Default package list"
-                            disabled={disabled}
-                            bind:checked={isDefaultPackages}
-                        />
-                    <div>
-                        <Button onclick={onclick} disabled={disabled}>Add</Button>
-                    </div>
+            <div class="w-full space-y-4">
+                <div class="grid grid-cols-2 items-center gap-2">
+                    {#if defaultsConf === undefined}
+                        <Skeleton class="h-6 py-2 px-8"/>
+                        <Skeleton class="h-6 py-2 px-8"/>
+                        <Skeleton class="h-6 py-2 px-8"/>
+                        <Skeleton class="h-6 py-2 px-8"/>
+                    {:else}
+                        {#each defaultsConf.groups as group, i (group.name)}
+                            <FieldSwitch
+                                    id="groups-{group.name}"
+                                    class="px-4 py-2"
+                                    title={group.name}
+                                    bind:checked={defaultsPicked[i]}
+                                    onclick={a => changeName(i)}
+                            />
+                        {/each}
+                    {/if}
                 </div>
-            {/if}
+                <div class="w-full">
+                    <Button class="float-end" disabled={disabled} onclick={onclick}>Add</Button>
+                </div>
+            </div>
         </Dialog.Footer>
-        {:else}
-        <Dialog.Header>
-            <Dialog.Title>Loading default profile for "{name}"</Dialog.Title>
-            <Label>Please wait...</Label>
-        </Dialog.Header>
-        {/if}
     </Dialog.Content>
 </Dialog.Root>
