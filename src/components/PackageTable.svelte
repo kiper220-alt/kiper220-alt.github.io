@@ -2,6 +2,7 @@
     import X from "@lucide/svelte/icons/x";
     import "./api";
     import * as rdb from "$rdb/";
+    import {compareVersions} from "$components/versioning";
 
     let data = $state(new Map<string, Map<string, string>>());
 
@@ -37,7 +38,7 @@
             }
             let tmp = new Map(data);
             for (let a of packages) {
-                tmp.set(a, new Map<string, string>(findPackageSetResponse.packages?.filter(b => a === b.sourcepkgname).map(b => {
+                let packageList: [string, string][] = findPackageSetResponse.packages?.filter(b => a === b.sourcepkgname).map(b => {
                     if (b.branch === undefined) {
                         throw new Error("Error while fetching!");
                     }
@@ -48,7 +49,21 @@
                         return [b.branch, version + "-" + release];
                     }
                     return [b.branch, version + release];
-                })));
+                });
+
+                // select maximal avalible version.
+                packageList = packageList.sort((a, b) => -compareVersions(a[1], b[1]));
+                for (let i = 0; i < packageList.length; i++) {
+                    for (let j = i + 1; j < packageList.length;) {
+                        if (packageList[i][0] === packageList[j][0]) {
+                            packageList = [...packageList.slice(0, j), ...packageList.slice(j + 1)];
+                            continue;
+                        }
+                        ++j;
+                    }
+                }
+
+                tmp.set(a, new Map<string, string>(packageList));
             }
             data = tmp;
         }
