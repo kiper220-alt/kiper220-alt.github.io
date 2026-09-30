@@ -1,0 +1,661 @@
+{
+  "branch": "p11",
+  "arch": "x86_64",
+  "alias": "alias",
+  "index": {
+    "provider": {
+      "evr": "1:2.0-alt1",
+      "source": "source",
+      "arch": "x86_64"
+    },
+    "second": {
+      "evr": "2.0-alt1",
+      "source": "second-source",
+      "arch": "x86_64"
+    }
+  },
+  "binary": [
+    {
+      "name": "epoch-preserved",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          }
+        ]
+      },
+      "expected": {
+        "tool": {
+          "evr": "1:2.0-alt1",
+          "source": "tool-source",
+          "arch": "x86_64"
+        }
+      }
+    },
+    {
+      "name": "wrong-branch",
+      "data": {
+        "request_args": {
+          "branch": "sisyphus",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "wrong-arch",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "aarch64",
+            "epoch": 1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "partial",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 2,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "missing-packages",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1
+      },
+      "error": true
+    },
+    {
+      "name": "missing-source",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "negative-epoch",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": -1
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "null-epoch",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": null
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "boolean-epoch",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": true
+          }
+        ]
+      },
+      "error": true
+    },
+    {
+      "name": "duplicate",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "arch": "x86_64"
+        },
+        "length": 2,
+        "packages": [
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          },
+          {
+            "name": "tool",
+            "source": "tool-source",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "epoch": 1
+          }
+        ]
+      },
+      "error": true
+    }
+  ],
+  "providers": [
+    {
+      "name": "provided",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "expected": {
+        "record": {
+          "candidates": [
+            "provider"
+          ],
+          "evidence": {
+            "provider": "fixture:provider"
+          },
+          "source": "https://rdb.altlinux.org/api/dependencies/packages_by_dependency?branch=p11&dp_name=alias&dp_type=provide&last_state=false",
+          "complete": true,
+          "status": "complete"
+        },
+        "packages": {
+          "provider": {
+            "evr": "1:2.0-alt1",
+            "source": "source",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        }
+      }
+    },
+    {
+      "name": "missing",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 0,
+        "packages": []
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "expected": {
+        "record": {
+          "candidates": [],
+          "evidence": {},
+          "source": "https://rdb.altlinux.org/api/dependencies/packages_by_dependency?branch=p11&dp_name=alias&dp_type=provide&last_state=false",
+          "complete": true,
+          "status": "complete"
+        },
+        "packages": {}
+      }
+    },
+    {
+      "name": "HTTP-404",
+      "data": null,
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "expected": {
+        "record": {
+          "candidates": [],
+          "evidence": {},
+          "source": "https://rdb.altlinux.org/api/dependencies/packages_by_dependency?branch=p11&dp_name=alias&dp_type=provide&last_state=false",
+          "complete": true,
+          "status": "complete"
+        },
+        "packages": {}
+      }
+    },
+    {
+      "name": "ambiguous",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 2,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          },
+          {
+            "name": "second",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "second-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "expected": {
+        "record": {
+          "candidates": [
+            "provider",
+            "second"
+          ],
+          "evidence": {
+            "provider": "fixture:provider",
+            "second": "fixture:second"
+          },
+          "source": "https://rdb.altlinux.org/api/dependencies/packages_by_dependency?branch=p11&dp_name=alias&dp_type=provide&last_state=false",
+          "complete": true,
+          "status": "complete"
+        },
+        "packages": {
+          "provider": {
+            "evr": "1:2.0-alt1",
+            "source": "source",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          },
+          "second": {
+            "evr": "2.0-alt1",
+            "source": "second-source",
+            "arch": "x86_64",
+            "hash": "second-hash"
+          }
+        }
+      }
+    },
+    {
+      "name": "partial",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 2,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "wrong-branch",
+      "data": {
+        "request_args": {
+          "branch": "sisyphus",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "wrong-version",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "3.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "missing-hash",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "missing-packages",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "unproven",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "x86_64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "other"
+          ]
+        }
+      },
+      "error": true
+    },
+    {
+      "name": "other-architecture",
+      "data": {
+        "request_args": {
+          "branch": "p11",
+          "dp_name": "alias",
+          "dp_type": "provide"
+        },
+        "length": 1,
+        "packages": [
+          {
+            "name": "provider",
+            "version": "2.0",
+            "release": "alt1",
+            "arch": "aarch64",
+            "hash": "provider-hash"
+          }
+        ]
+      },
+      "metadata": {
+        "provider-hash": {
+          "source": "fixture:provider",
+          "provides": [
+            "alias"
+          ]
+        },
+        "second-hash": {
+          "source": "fixture:second",
+          "provides": [
+            "alias"
+          ]
+        }
+      },
+      "expected": {
+        "record": {
+          "candidates": [],
+          "evidence": {},
+          "source": "https://rdb.altlinux.org/api/dependencies/packages_by_dependency?branch=p11&dp_name=alias&dp_type=provide&last_state=false",
+          "complete": true,
+          "status": "complete"
+        },
+        "packages": {}
+      }
+    }
+  ]
+}

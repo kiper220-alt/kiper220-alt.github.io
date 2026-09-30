@@ -47,10 +47,11 @@ export function definitionsFromArchive(bytes: Uint8Array, tag: string, revision:
 
 export function binaryIndex(data: { request_args?: { branch?: string; arch?: string }; length?: number; packages?: Row[] }, branch: string, arch: string): Record<string, Package> {
   if (data.request_args?.branch !== branch || data.request_args.arch !== arch ||
-      !data.packages?.length || data.length !== data.packages.length) throw new Error(`Неполный экспорт ${branch}/${arch}`);
+      !Array.isArray(data.packages) || !data.packages.length || data.length !== data.packages.length) throw new Error(`Неполный экспорт ${branch}/${arch}`);
   const result: Record<string, Package> = {};
   for (const row of data.packages) {
-    if (row.arch !== arch || !row.name || !row.source || !row.version || !row.release ||
+    if (row.arch !== arch || typeof row.source !== 'string' ||
+        ![row.name, row.source, row.version, row.release].every(value => typeof value === 'string' && value) ||
         (row.epoch !== undefined && (!Number.isSafeInteger(row.epoch) || row.epoch < 0))) {
       throw new Error(`Некорректный RPM в экспорте ${branch}/${arch}`);
     }
@@ -61,8 +62,8 @@ export function binaryIndex(data: { request_args?: { branch?: string; arch?: str
 }
 
 export function imageIndex(data: { request_args?: { uuid?: string }; length?: number; packages?: Row[] }, uuid: string, index: Record<string, Package>): Record<string, Package> {
-  if (data.request_args?.uuid !== uuid || !data.packages?.length || data.length !== data.packages.length) {
-    throw new Error('Неполный список RPM образа 11.1');
+  if (data.request_args?.uuid !== uuid || !Array.isArray(data.packages) || !data.packages.length || data.length !== data.packages.length) {
+    throw new Error('Неполный список RPM образа');
   }
   const result: Record<string, Package> = {};
   for (const row of data.packages) {

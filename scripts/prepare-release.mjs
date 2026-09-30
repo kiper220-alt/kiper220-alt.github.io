@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Prepare once, verify the immutable image, then publish content-addressed JSON.
 // Moving branch updates never call this script or write to public/releases/.
+import { RELEASE, ARCHITECTURES } from '../src/doc/config.ts';
 import { readFile, mkdir, mkdtemp, writeFile, rename, readdir } from 'node:fs/promises';
 import { resolve, dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -11,7 +12,7 @@ import { imageIndex } from '../src/doc/acquisition.ts';
 
 const API = 'https://rdb.altlinux.org/api';
 const GIT = 'https://altlinux.space/api/v1/repos/alterator/alt-components-base';
-const arches = ['x86_64', 'aarch64'];
+const arches = ARCHITECTURES;
 const vr = value => value.replace(/^[0-9]+:/, '');
 
 function trackedNames(definitions, arch) {
@@ -139,7 +140,7 @@ export async function prepareRelease({ release, inputDir, outputDir, request = f
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const { values } = parseArgs({ options: {
-    release: { type: 'string', default: '11.1' }, 'input-dir': { type: 'string', default: 'public/doc-data' },
+    release: { type: 'string', default: RELEASE }, 'input-dir': { type: 'string', default: 'public/doc-data' },
     'output-dir': { type: 'string' }, 'skip-epoch-checks': { type: 'boolean', default: false },
   } });
   await prepareRelease({ release: values.release, inputDir: resolve(values['input-dir']),

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build component definitions and package snapshots for p11, Sisyphus and the 11.1 ISO."""
+"""Build component definitions and package snapshots for p11, Sisyphus and the configured release ISO."""
 import argparse
 import datetime as dt
 import hashlib
@@ -12,10 +12,12 @@ import time
 import tomllib
 import urllib.error
 import urllib.request
+from contracts import binary_export
 from provides import ProvidesReader, branch_providers, image_providers
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "public" / "doc-data"
+RELEASE_CONFIG = json.loads((ROOT / "config" / "release.json").read_text())
 UPSTREAM = "https://altlinux.space/alterator/alt-components-base.git"
 EXPORT = "https://rdb.altlinux.org/api/export/branch_binary_packages/p11"
 CATALOGUE_SOURCE = "https://rdb.altlinux.org/api/site/source_package_versions?name=alt-components-base"
@@ -64,17 +66,8 @@ def read_definitions(repo, tag):
 
 
 def binary_index(exports, arch, branch="p11"):
-    result = {}
-    for export, expected in ((exports["noarch"], "noarch"), (exports[arch], arch)):
-        assert export.get("request_args", {}).get("branch") == branch
-        assert export.get("request_args", {}).get("arch") == expected
-        assert export.get("length", 0) > (20000 if expected != "noarch" else 1000), "Incomplete repository export"
-        for row in export["packages"]:
-            if row.get("arch") != expected or not all(row.get(k) is not None for k in ("name", "version", "release", "source")):
-                continue
-            evr = (f'{row["epoch"]}:' if row.get("epoch") else "") + row["version"] + "-" + row["release"]
-            result[row["name"]] = {"evr": evr, "source": row["source"], "arch": expected}
-    return result
+    return {**binary_export(exports["noarch"], branch, "noarch"),
+            **binary_export(exports[arch], branch, arch)}
 
 
 def current_definition_package(indexes, source_versions):
@@ -151,12 +144,12 @@ def write_atomic(path, value):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=pathlib.Path, help="existing clone for offline use")
-    parser.add_argument("--release", default="11.1", help="product release, e.g. 11.1")
+    parser.add_argument("--release", default=RELEASE_CONFIG["release"], help="product release, e.g. 11.1")
     args = parser.parse_args()
     if not re.fullmatch(r"\d+\.\d+(?:\.\d+)?", args.release):
         raise ValueError("Invalid release identifier")
     iso_lists = {arch: f"https://download.basealt.ru/pub/distributions/ALTLinux/p11/images/server/{arch}/alt-server-{args.release}-{arch}.iso.txt"
-                 for arch in ("x86_64", "aarch64")}
+                 for arch in RELEASE_CONFIG["architectures"]}
     now = dt.datetime.now(dt.timezone.utc).isoformat()
     with tempfile.TemporaryDirectory(prefix="doc-components-") as directory:
         repo = pathlib.Path(directory) / "repo"
@@ -170,16 +163,16 @@ def main():
                 listing = response.read().decode("utf-8")
             match = re.search(r"/alt-editions-server-([0-9][^/\s]+)\.noarch\.rpm", listing)
             if not match:
-                raise RuntimeError(f"11.1 edition package tag not confirmed by {arch} ISO listing")
+                raise RuntimeError(f"{args.release} edition package tag not confirmed by {arch} ISO listing")
             release_tags.add(match.group(1))
         if len(release_tags) != 1:
             raise RuntimeError(f"Edition package tags differ between ISO architectures: {release_tags}")
         release_tag = release_tags.pop()
         release_defs = read_definitions(repo, release_tag)
         exports = {branch: {arch: url_json(f"https://rdb.altlinux.org/api/export/branch_binary_packages/{branch}?arch={arch}")
-                            for arch in ("noarch", "x86_64", "aarch64")}
+                            for arch in ["noarch", *RELEASE_CONFIG["architectures"]]}
                    for branch in ("p11", "sisyphus")}
-        indexes = {branch: {arch: binary_index(exports[branch], arch, branch) for arch in ("x86_64", "aarch64")}
+        indexes = {branch: {arch: binary_index(exports[branch], arch, branch) for arch in RELEASE_CONFIG["architectures"]}
                    for branch in exports}
         definition_tag, definition_package = current_definition_package(indexes["p11"], url_json(CATALOGUE_SOURCE))
         current_defs = read_definitions(repo, definition_tag)
@@ -200,7 +193,7 @@ def main():
         metadata_cache_path = OUT / "rpm-provides-cache.json"
         metadata_cache = json.loads(metadata_cache_path.read_text()).get("packages", {}) if metadata_cache_path.exists() else {}
         provides_reader = ProvidesReader(url_json, metadata_cache)
-        for arch in ("x86_64", "aarch64"):
+        for arch in RELEASE_CONFIG["architectures"]:
             index = indexes["p11"][arch]
             names = set()
             for component in current_defs["components"].values():

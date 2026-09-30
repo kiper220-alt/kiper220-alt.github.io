@@ -34,8 +34,8 @@ class ProvidesReader:
                 rows = []
             else:
                 args = result.get("request_args", {})
-                rows = result.get("packages", [])
-                if (args.get("branch") != branch or args.get("dp_name") != name or
+                rows = result.get("packages")
+                if (not isinstance(rows, list) or args.get("branch") != branch or args.get("dp_name") != name or
                         args.get("dp_type") != "provide" or result.get("length") != len(rows)):
                     raise RuntimeError(f"Incomplete Provides lookup: {url}")
             self.lookups[key] = (url, rows)
@@ -81,7 +81,7 @@ def branch_providers(reader, branch, names, index, arch):
             evidence[actual] = metadata["source"]
             packages[actual] = {**package, "hash": str(row["hash"])}
         providers[name] = {"candidates": sorted(candidates), "source": url,
-                           "evidence": evidence, "complete": True}
+                           "evidence": evidence, "complete": True, "status": "complete"}
     return providers, packages
 
 

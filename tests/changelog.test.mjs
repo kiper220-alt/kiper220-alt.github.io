@@ -52,5 +52,6 @@ test('the caller can cancel obsolete branch requests',async()=>{
     signals.push(options.signal);
     return response(url.includes('source_package_versions')?versions:{pkghash:'p11-log',changelog:[]});
   });
-  assert.deepEqual(signals,[controller.signal,controller.signal]);
+  assert.equal(signals.length,2);
+  assert.ok(signals.every(signal=>signal instanceof AbortSignal&&!signal.aborted));
 });

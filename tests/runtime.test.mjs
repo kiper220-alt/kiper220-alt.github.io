@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {binaryIndex,imageIndex,definitionsFromArchive,loadRuntime,API,GIT_API} from '../src/doc/runtime.ts';
+import {binaryIndex,imageIndex,definitionsFromArchive,startRuntime,API,GIT_API} from '../src/doc/runtime.ts';
 import {archiveFor} from './runtime-fixtures.mjs';
 import {compareImageSnapshot} from '../src/doc/model.ts';
 import { sha256 } from '../src/doc/release.ts';
@@ -78,11 +78,11 @@ test('repository and ISO inventories reject wrong identity, partial data and inv
   assert.throws(()=>imageIndex({...image,length:2},'fixed',{}));
 });
 test('runtime uses a fixed release and dynamic branches without querying historical endpoints',async()=>{
-  const{request,calls,image}=fixture(),controller=new AbortController(),progress=[]; let completed;
-  const result=await loadRuntime('x86_64',{request,signal:controller.signal,detailIntervalMs:0,progress:p=>progress.push(p),update:r=>{if(r.stage==='complete')completed=r;}});
+  const{request,calls,image}=fixture(),controller=new AbortController(),progress=[];
+  const session=startRuntime('x86_64',{request,signal:controller.signal,detailIntervalMs:0,progress:p=>progress.push(p)});
+  const result=await session.initial;
   assert.equal(result.stage,'base');
-  while(!completed) await new Promise(resolve=>setTimeout(resolve,1));
-  const final=completed;
+  const final=await session.done;
   assert.equal(final.current.definitions.tag,'2.0-alt1');
   assert.equal(final.image.definitions.tag,'1.0-alt1');
   assert.equal(final.image.id,'iso-11.1');
@@ -95,46 +95,88 @@ test('runtime uses a fixed release and dynamic branches without querying histori
   assert.ok(calls.some(c=>c.url.includes('/releases/11.1/')));
   assert.ok(!calls.some(c=>/\/image\/|\/tags\/1\.0-alt1|\/archive\/a{40}|\/iso-provider|\/iso-tool/.test(c.url)));
   assert.ok(calls.every(c=>c.url.startsWith(API)||c.url.startsWith(GIT_API)||c.url.startsWith('/releases/')));
-  assert.ok(calls.every(c=>c.config.cache==='no-store'&&c.config.credentials==='omit'&&c.config.signal===controller.signal));
+  assert.ok(calls.every(c=>c.config.cache==='no-store'&&c.config.credentials==='omit'&&c.config.signal instanceof AbortSignal));
   assert.equal(final.metrics.requests,calls.length);
   assert.ok(final.metrics.bytes>0&&progress.length>0);
-  assert.equal(compareImageSnapshot(final.image,final.current,'edition_server')[0].rows.find(r=>r.name==='tool').change,'обновлён');
+  assert.equal(compareImageSnapshot(final.image,final.current,'edition_server')[0].rows.find(r=>r.name==='tool').change,'updated');
 });
 test('composition is computed in runtime independently of version updates',async()=>{
   const{request}=fixture({composition:true});
-  const r=await loadRuntime('x86_64',{request,signal:new AbortController().signal,detailIntervalMs:0});
-  assert.equal(compareImageSnapshot(r.image,r.current,'edition_server')[0].rows.find(p=>p.name==='tool').composition,'исключён из компонента');
+  const r=await startRuntime('x86_64',{request,detailIntervalMs:0}).done;
+  assert.equal(compareImageSnapshot(r.image,r.current,'edition_server')[0].rows.find(p=>p.name==='tool').composition,'excluded');
 });
 test('broken exports, source builds, tags, Provides and HTTP errors never produce a partial comparison',async()=>{
   for(const options of[{broken:'p11'},{badHash:true},{wrongTag:true},{httpError:true},{badChecksum:true}]){
     const{request,calls}=fixture(options);
-    await assert.rejects(loadRuntime('x86_64',{request,signal:new AbortController().signal,detailIntervalMs:0}));
+    const session=startRuntime('x86_64',{request,detailIntervalMs:0});
+    await assert.rejects(session.initial);
+    await assert.rejects(session.done);
     assert.ok(!calls.some(c=>c.url.includes('doc-data')));
   }
-  const supplementary=fixture({broken:'sisyphus'}); let final;
-  await loadRuntime('x86_64',{request:supplementary.request,signal:new AbortController().signal,detailIntervalMs:0,update:r=>{if(r.stage==='complete')final=r;}});
-  while(!final) await new Promise(resolve=>setTimeout(resolve,1));
+  const supplementary=fixture({broken:'sisyphus'});
+  let final=await startRuntime('x86_64',{request:supplementary.request,detailIntervalMs:0}).done;
   assert.match(final.sisyphusError,/Sisyphus/);
-  const providers=fixture({badProvides:true}); final=undefined;
-  await loadRuntime('x86_64',{request:providers.request,signal:new AbortController().signal,detailIntervalMs:0,update:r=>{if(r.stage==='complete')final=r;}});
-  while(!final) await new Promise(resolve=>setTimeout(resolve,1));
+  const providers=fixture({badProvides:true});
+  final=await startRuntime('x86_64',{request:providers.request,detailIntervalMs:0}).done;
   assert.ok(final.metrics.failed>0);
 });
 test('an incomplete static epoch remains unknown without fetching or modifying the baseline',async()=>{
-  const{request}=fixture({badEpoch:true}); let r;
-  await loadRuntime('x86_64',{request,signal:new AbortController().signal,detailIntervalMs:0,update:value=>{if(value.stage==='complete')r=value;}});
-  while(!r) await new Promise(resolve=>setTimeout(resolve,1));
+  const{request}=fixture({badEpoch:true});
+  const r=await startRuntime('x86_64',{request,detailIntervalMs:0}).done;
   assert.equal(r.image.packages.tool.evr,'1.0-alt1');
   assert.equal(r.image.packages.tool.epochKnown,false);
-  assert.equal(compareImageSnapshot(r.image,r.current,'edition_server')[0].rows.find(p=>p.name==='tool').change,'изменился version-release; epoch образа неизвестен');
+  assert.equal(compareImageSnapshot(r.image,r.current,'edition_server')[0].rows.find(p=>p.name==='tool').change,'version-changed-epoch-unknown');
 });
 test('runtime can be cancelled and each new load requests its sources again',async()=>{
   const{request,calls}=fixture(),controller=new AbortController();
   controller.abort();
-  await assert.rejects(loadRuntime('x86_64',{request,signal:controller.signal,detailIntervalMs:0}));
+  const session=startRuntime('x86_64',{request,signal:controller.signal,detailIntervalMs:0});
+  await assert.rejects(session.initial);
+  await assert.rejects(session.done);
   assert.equal(calls.length,0);
-  for(let i=0;i<2;i++)await loadRuntime('x86_64',{request,signal:new AbortController().signal,detailIntervalMs:0});
+  for(let i=0;i<2;i++)await startRuntime('x86_64',{request,detailIntervalMs:0}).done;
   assert.equal(calls.filter(c=>c.url.includes('/manifest.json')).length,2);
   assert.equal(calls.filter(c=>c.url.includes('/image_uuid_by_tag')).length,0);
   assert.equal(calls.filter(c=>c.url.includes('/branch_binary_packages/p11?arch=x86_64')).length,2);
+});
+
+test('a completed negative Provides lookup means missing p11 without legacy missingExplicit', async () => {
+  const source=fixture();
+  const request=async(url,config)=>url.includes('/packages_by_dependency')
+    ? Response.json({request_args:{branch:new URL(url).searchParams.get('branch'),dp_name:'alias',dp_type:'provide'},length:0,packages:[]})
+    : source.request(url,config);
+  const {current,image}=await startRuntime('x86_64',{request,detailIntervalMs:0}).done;
+  assert.equal(current.missingExplicit,undefined);
+  const alias=compareImageSnapshot(image,current,'edition_server')[0].rows.find(row=>row.name==='alias');
+  assert.equal(alias.afterResolution.kind,'missing');
+  assert.equal(alias.change,'missing-p11');
+});
+
+test('initial is available before verification; cancelling rejects done and stops updates', async () => {
+  const source=fixture(),updates=[];
+  let started;
+  const inFlight=new Promise(resolve=>{started=resolve;});
+  const request=async(url,config)=>{
+    if(url.includes('/packages_by_dependency')) {
+      started();
+      return new Promise(()=>{});
+    }
+    return source.request(url,config);
+  };
+  const session=startRuntime('x86_64',{request,detailIntervalMs:0,update:value=>updates.push(value)});
+  const initial=await session.initial;
+  assert.equal(initial.stage,'base');
+  await inFlight;
+  session.cancel();
+  await assert.rejects(session.done,{name:'AbortError'});
+  const count=updates.length;
+  await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(updates.length,count);
+  assert.equal(initial.current.providers.alias.status,'pending');
+});
+
+test('a source timeout rejects both lifecycle promises instead of hanging', async () => {
+  const session=startRuntime('x86_64',{request:()=>new Promise(()=>{}),requestTimeoutMs:10});
+  await assert.rejects(session.initial,/Время ожидания/);
+  await assert.rejects(session.done,/Время ожидания/);
 });

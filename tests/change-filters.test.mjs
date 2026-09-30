@@ -4,11 +4,11 @@ import { changeFilters, matchesFilters, matchesComponentChange, matchesPackageCh
 
 const version = evr => ({evr, source:'fixture', arch:'x86_64'});
 const component = rows => ({name:'fixture', title:'fixture', section:'base', isNew:false, removed:false, moved:false, rows, kernelModules:[], kernelModulesChanged:false, reason:''});
-const updated = {name:'updated',before:version('1-alt1'),after:version('2-alt1'),change:'обновлён'};
-const unchanged = {name:'same',before:version('1-alt1'),after:version('1-alt1'),change:'без изменений'};
+const updated = {name:'updated',before:version('1-alt1'),after:version('2-alt1'),change:'updated'};
+const unchanged = {name:'same',before:version('1-alt1'),after:version('1-alt1'),change:'unchanged'};
 
 test('version filters select only matching package rows within a component', () => {
-  const down = {...updated,name:'down',change:'понижен'};
+  const down = {...updated,name:'down',change:'downgraded'};
   const row = component([updated,down,unchanged]);
   assert.equal(matchesComponentChange(row,'updated'),true);
   assert.deepEqual(packagesForChangeFilter(row,'updated'),[updated]);
@@ -18,9 +18,9 @@ test('version filters select only matching package rows within a component', () 
 });
 
 test('disappearance from p11 is separate from ISO absence and missing data', () => {
-  const removed = {name:'removed',before:version('1-alt1'),change:'отсутствует в p11',availability:'отсутствует в p11'};
-  const noImage = {name:'optional',after:version('1-alt1'),change:'нет в образе 11.1'};
-  const noData = {name:'unresolved',change:'нет в образе и p11',availability:'нет в образе и p11'};
+  const removed = {name:'removed',before:version('1-alt1'),change:'missing-p11',availability:'missing-p11'};
+  const noImage = {name:'optional',after:version('1-alt1'),change:'missing-image'};
+  const noData = {name:'unresolved',change:'missing-both',availability:'missing-both'};
   assert.equal(matchesPackageChange(removed,'missing-p11'),true);
   assert.equal(matchesPackageChange(noImage,'missing-p11'),false);
   assert.equal(matchesPackageChange(noData,'missing-p11'),false);
@@ -31,8 +31,8 @@ test('disappearance from p11 is separate from ISO absence and missing data', () 
 });
 
 test('composition filters include secondary changes and component membership changes', () => {
-  const added = {...updated,composition:'включён в компонент'};
-  const excluded = {...unchanged,composition:'исключён из компонента'};
+  const added = {...updated,composition:'included'};
+  const excluded = {...unchanged,composition:'excluded'};
   assert.equal(matchesPackageChange(added,'included'),true);
   assert.equal(matchesPackageChange(excluded,'excluded'),true);
   assert.equal(matchesComponentChange(component([added]),'composition'),true);
@@ -45,7 +45,7 @@ test('composition filters include secondary changes and component membership cha
 });
 
 test('uncertain data and kernel selectors are not reported as unchanged', () => {
-  const uncertain={...updated,change:'изменился version-release; epoch образа неизвестен'};
+  const uncertain={...updated,change:'version-changed-epoch-unknown'};
   assert.equal(matchesComponentChange(component([uncertain]),'uncertain'),true);
   assert.equal(matchesComponentChange(component([uncertain]),'unchanged'),false);
   const kernel={...component([unchanged]),kernelModules:['kernel-modules-fixture']};
@@ -61,7 +61,7 @@ test('main list is compact and contains no component or data states',()=>{
 });
 
 test('the unchanged option selects unchanged packages, not only unchanged components',()=>{
-  const added={name:'optional',after:version('2-alt1'),change:'включён в компонент',composition:'включён в компонент',availability:'нет в образе 11.1'};
+  const added={name:'optional',after:version('2-alt1'),change:'included',composition:'included',availability:'missing-image'};
   const row=component([updated,added,unchanged]);
   assert.equal(matchesFilters(row,'updated'),true);
   assert.deepEqual(packagesForChangeFilter(row,'included'),[added]);

@@ -1,4 +1,4 @@
-import { compareEVR } from '../doc/model';
+import { compareEVR } from '../domain/rpm.ts';
 
 export type VersionUnit = string | number;
 export type Version = VersionUnit[];

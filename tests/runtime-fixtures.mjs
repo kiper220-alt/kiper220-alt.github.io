@@ -120,6 +120,7 @@ export async function fixtureRuntime(page, overrides={}) {
     return found?route.fulfill({contentType:'application/zip',body:Buffer.from(archiveFor(found))}):route.fulfill({status:404});
   });
   // Advance only fixture-time pacing; live timing tests never install this.
+  if(overrides.realTimers)return {snapshots,observed};
   await page.clock.install();
   let running=true;
   page.on('close',()=>{running=false;});

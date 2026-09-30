@@ -3,7 +3,7 @@ import {chromium} from 'playwright-core';
 import {fixtureRuntime} from './runtime-fixtures.mjs';
 
 const live=process.env.LIVE_RUNTIME==='1';
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||chromium.executablePath(),headless:true,args:['--no-sandbox']});
 const base=process.env.TEST_BASE_URL||'http://127.0.0.1:5173/';
 try {
   for(const width of live?[390]:[1280,390]){

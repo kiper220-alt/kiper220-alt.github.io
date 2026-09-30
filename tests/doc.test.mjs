@@ -47,19 +47,19 @@ test('RPM EVR order handles epoch, release, numeric, tilde, caret and downgrade'
 test('package additions, exclusions, versions, shared source and new components', () => {
   const rows = compareSnapshots(old, next, 'edition_server');
   const a = rows.find(r => r.name === 'a');
-  assert.equal(a.rows.find(p => p.name === 'one').change, 'обновлён');
-  assert.equal(a.rows.find(p => p.name === 'two').change, 'исключён из компонента');
-  assert.equal(a.rows.find(p => p.name === 'three').change, 'появился в p11');
-  assert.equal(a.rows.find(p => p.name === 'three').composition, 'включён в компонент');
+  assert.equal(a.rows.find(p => p.name === 'one').change, 'updated');
+  assert.equal(a.rows.find(p => p.name === 'two').change, 'excluded');
+  assert.equal(a.rows.find(p => p.name === 'three').change, 'added-p11');
+  assert.equal(a.rows.find(p => p.name === 'three').composition, 'included');
   assert.equal(rows.find(r => r.name === 'c').isNew, true);
-  assert.equal(rows.find(r => r.name === 'b').rows.find(p => p.name === 'shared').change, 'обновлён');
+  assert.equal(rows.find(r => r.name === 'b').rows.find(p => p.name === 'shared').change, 'updated');
   assert.equal(rows.filter(r => r.rows.some(p => p.source === 'src-common')).length, 2);
 });
 
 test('definitions can be compared while release versions are unavailable', () => {
   const rows = compareDefinitionsOnly(old.definitions, next, 'edition_server');
-  assert.equal(rows.find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'нет данных');
-  assert.equal(rows.find(r => r.name === 'a').rows.find(p => p.name === 'three').change, 'включён в компонент');
+  assert.equal(rows.find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'unknown');
+  assert.equal(rows.find(r => r.name === 'a').rows.find(p => p.name === 'three').change, 'included');
   assert.equal(rows.find(r => r.name === 'c').isNew, true);
 });
 
@@ -73,7 +73,7 @@ test('composition changes without version change and version changes without def
   const versionsOnly = structuredClone(old);
   versionsOnly.id = 'p11'; versionsOnly.branch = 'p11'; delete versionsOnly.release; versionsOnly.packages.one.evr = '1.1-alt1';
   const versionRows = compareSnapshots(old, versionsOnly, 'edition_server');
-  assert.equal(versionRows.find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'обновлён');
+  assert.equal(versionRows.find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'updated');
   assert.equal(versionRows.find(r => r.name === 'a').moved, false);
 });
 
@@ -139,19 +139,19 @@ test('ISO absence is not repository absence; versions and composition still comp
   image.packages.one.epochKnown = true;
   const rows = compareImageSnapshot(image, next, 'edition_server');
   const a = rows.find(r => r.name === 'a');
-  assert.equal(a.rows.find(p => p.name === 'one').change, 'обновлён');
-  assert.equal(a.rows.find(p => p.name === 'two').change, 'исключён из компонента');
-  assert.equal(a.rows.find(p => p.name === 'three').change, 'включён в компонент');
+  assert.equal(a.rows.find(p => p.name === 'one').change, 'updated');
+  assert.equal(a.rows.find(p => p.name === 'two').change, 'excluded');
+  assert.equal(a.rows.find(p => p.name === 'three').change, 'included');
   const sameDefinitions = structuredClone(next);
   sameDefinitions.packages.one.evr = '1.2-alt1';
-  assert.equal(compareImageSnapshot(image, sameDefinitions, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'обновлён');
+  assert.equal(compareImageSnapshot(image, sameDefinitions, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'updated');
   const noImagePackage = structuredClone(image);
   delete noImagePackage.packages.one;
-  assert.equal(compareImageSnapshot(noImagePackage, next, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'нет в образе 11.1');
+  assert.equal(compareImageSnapshot(noImagePackage, next, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'missing-image');
   const epoch = structuredClone(next);
   epoch.packages.one.evr = '1:1.1-alt1';
   image.packages.one.epochKnown = false;
-  assert.equal(compareImageSnapshot(image, epoch, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'изменился version-release; epoch образа неизвестен');
+  assert.equal(compareImageSnapshot(image, epoch, 'edition_server').find(r => r.name === 'a').rows.find(p => p.name === 'one').change, 'version-changed-epoch-unknown');
 });
 
 test('repository disappearance changes the component summary, not its definition composition', () => {
@@ -159,9 +159,9 @@ test('repository disappearance changes the component summary, not its definition
   const p11 = {...structuredClone(old), branch:'p11', release:undefined, missingExplicit:['one']};
   delete p11.packages.one;
   const row = compareImageSnapshot(image, p11, 'edition_server').find(r => r.name === 'a');
-  assert.equal(row.rows.find(p => p.name === 'one').change, 'отсутствует в p11');
+  assert.equal(row.rows.find(p => p.name === 'one').change, 'missing-p11');
   assert.equal(row.rows.find(p => p.name === 'one').composition, undefined);
-  assert.equal(row.reason, 'Пакет отсутствует в p11');
+  assert.equal(row.reason, 'missing-p11');
 });
 
 test('verified ISO epoch participates in RPM comparison; unknown data is not unchanged', () => {
@@ -169,12 +169,12 @@ test('verified ISO epoch participates in RPM comparison; unknown data is not unc
   image.packages.one = {...pkg('1:1.0-alt1','src-one'), epochKnown:true};
   const p11 = {...structuredClone(old), branch:'p11', release:undefined};
   p11.packages.one.evr = '1:1.1-alt1';
-  assert.equal(compareImageSnapshot(image,p11,'edition_server').find(r=>r.name==='a').rows.find(p=>p.name==='one').change,'обновлён');
+  assert.equal(compareImageSnapshot(image,p11,'edition_server').find(r=>r.name==='a').rows.find(p=>p.name==='one').change,'updated');
   delete image.packages.two;
   delete p11.packages.two;
   p11.missingExplicit=['two'];
   const missing = compareImageSnapshot(image,p11,'edition_server').find(r=>r.name==='a').rows.find(p=>p.name==='two');
-  assert.equal(missing.change,'нет в образе и p11');
+  assert.equal(missing.change,'missing-both');
 });
 
 test('kernel_module entries are selectors, not missing literal RPMs; architecture exclusions apply', () => {

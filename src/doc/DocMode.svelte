@@ -1,33 +1,36 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import {
     changelogRange,
     compareEVR,
     compareImageSnapshot,
     resolvePackage,
-    resolutionLabel,
     type ComponentRow,
     type PackageResolution,
     type PackageRow,
-    type Snapshot,
+    type BranchSnapshot,
+    type FrozenReleaseSnapshot,
   } from "./model";
   import { changeFilters, matchesFilters, packagesForChangeFilter, type PackageChangeFilter } from "./change-filters";
   import { branchLabel, fetchSourceChangelog, type ChangelogBranch, type ChangelogEntry } from "./changelog";
-  import { lastResultKey, loadRuntime, usableResult, type RuntimeResult } from "./runtime";
+  import { lastResultKey, startRuntime, usableResult, type RuntimeResult, type RuntimeSession } from "./runtime";
   import { browserCache, type RuntimeCache } from "./cache";
+  import { RELEASE, ARCHITECTURES } from "./config";
+  import { changeLabel, componentLabel, resolutionLabel } from "./labels";
   import { RuntimePriority } from "./queue";
 
-  const release = "11.1";
+  const release = RELEASE;
   let edition = $state("edition_server");
-  let arch = $state("x86_64");
-  let current = $state<Snapshot | null>(null);
-  let image = $state<Snapshot | null>(null);
-  let sisyphus = $state<Snapshot | null>(null);
+  let arch = $state(ARCHITECTURES[0]);
+  let current = $state<BranchSnapshot | null>(null);
+  let image = $state<FrozenReleaseSnapshot | null>(null);
+  let sisyphus = $state<BranchSnapshot | null>(null);
+  let sisyphusError = $state("");
   let loading = $state(true);
   let error = $state("");
   let dataWarnings = $state<string[]>([]);
   let checking = $state(false);
-  let loadController: AbortController | undefined;
+  let session: RuntimeSession | undefined;
   let loadRequest = 0;
   const successfulLoads = new Map<string, RuntimeResult>();
   const runtimeCache: RuntimeCache = browserCache();
@@ -37,8 +40,7 @@
   let categoryFilter = $state("");
   let changeFilter = $state<PackageChangeFilter>("");
   let expanded = $state<string | null>(null);
-  let selected = $state<PackageRow | null>(null);
-  let selectedComponent = $state<ComponentRow | null>(null);
+  let selection = $state<{ component: string; name: string } | null>(null);
   let changelog = $state<ChangelogEntry[]>([]);
   let changelogBranch = $state<ChangelogBranch>('p11');
   let changelogMode = $state<'range' | 'full'>('range');
@@ -49,6 +51,8 @@
   const allRows = $derived.by(() =>
     current && image ? compareImageSnapshot(image, current, edition) : [] as ComponentRow[],
   );
+  const selectedComponent = $derived(allRows.find(row => row.name === selection?.component) ?? null);
+  const selected = $derived(selectedComponent?.rows.find(row => row.name === selection?.name) ?? null);
   const categories = $derived([...new Set(allRows.map((row) => row.category).filter(Boolean))] as string[]);
   const sections = $derived([...new Set(allRows.map((row) => row.section))]);
   const visible = $derived(allRows.filter((row) => {
@@ -58,7 +62,10 @@
     return !query || `${row.name} ${row.title} ${row.rows.map((p) => [p.name, ...(p.beforeResolution?.candidates || []), ...(p.afterResolution?.candidates || [])].join(" ")).join(" ")} ${row.kernelModules.join(" ")}`
       .toLowerCase().includes(query.toLowerCase());
   }));
-  const selectedSisyphus = $derived(selected && sisyphus ? resolvePackage(sisyphus, selected.name) : undefined);
+  function resolveSisyphus(name: string): PackageResolution {
+    return !sisyphus && sisyphusError ? { kind: 'unknown', candidates: [] } : resolvePackage(sisyphus, name);
+  }
+  const selectedSisyphus = $derived(selected ? resolveSisyphus(selected.name) : undefined);
   const selectedTarget = $derived(changelogBranch === 'p11' ? selected?.afterResolution : selectedSisyphus);
   const selectedSource = $derived(selectedTarget?.package?.source || "");
   const selectedBranchSnapshot = $derived(changelogBranch === 'p11' ? current : sisyphus);
@@ -72,11 +79,28 @@
         selectedBranchSnapshot && resolvePackage(selectedBranchSnapshot, pkg.name).package?.source === selectedSource)).map((row) => row.title)
     : []);
 
+  // A scalar identity prevents unrelated background updates from restarting
+  // changelog requests. Selection itself is always derived from current rows.
+  const changelogIdentity = $derived(JSON.stringify([
+    arch, edition, selected?.name, changelogBranch,
+    selectedTarget?.kind, selectedTarget?.name, selectedTarget?.package,
+    selected?.beforeResolution?.kind, selected?.beforeResolution?.name, selected?.before,
+  ]));
+  $effect(() => {
+    void changelogIdentity;
+    untrack(() => {
+      if (selected) void loadChangelog(selected, changelogBranch);
+      else { ++changelogRequest; changelogController?.abort(); }
+    });
+  });
+
   function applyRuntimeResult(value: RuntimeResult, request: number) {
     if (request !== loadRequest) return;
+    loading = false;
     current = value.current;
     image = value.image;
     sisyphus = value.sisyphus;
+    sisyphusError = value.sisyphusError || "";
     dataWarnings = value.warnings;
     checking = value.stage !== 'complete';
     if (value.stage === 'complete' && value.metrics.failed === 0) successfulLoads.set(arch, value);
@@ -84,9 +108,7 @@
 
   async function load() {
     const request = ++loadRequest;
-    loadController?.abort();
-    loadController = new AbortController();
-    const signal = loadController.signal;
+    session?.cancel();
     const requestedArch = arch;
     loading = true;
     checking = false;
@@ -97,17 +119,20 @@
     current = previous?.current || null;
     image = previous?.image || null;
     sisyphus = previous?.sisyphus || null;
+    sisyphusError = "";
     closePackage();
     dataWarnings = [];
     try {
-      const result = await loadRuntime(requestedArch, { signal, cache: runtimeCache, priority: runtimePriority,
+      const active = startRuntime(requestedArch, { cache: runtimeCache, priority: runtimePriority,
         update: value => applyRuntimeResult(value, request) });
+      session = active;
+      await active.initial;
+      await active.done;
       if (request !== loadRequest) return;
-      closePackage();
-      applyRuntimeResult(result, request);
     } catch (e) {
       if (request !== loadRequest) return;
-      loadController.abort();
+      session?.cancel();
+      if (previous) applyRuntimeResult(previous, request);
       checking = false;
       error = `Не удалось получить данные напрямую: ${String(e)}${previous && usableResult(previous, requestedArch)
         ? ". На экране сохранён предыдущий успешный результат." : ""}`;
@@ -131,25 +156,22 @@
 
   onMount(() => {
     void load();
-    return () => { ++loadRequest; loadController?.abort(); closePackage(); };
+    return () => { ++loadRequest; session?.cancel(); closePackage(); };
   });
 
   const definitionLink = (row: ComponentRow) => current
     ? current.definitions.source.replace(/\.git$/, '') + "/src/tag/" + current.definitions.tag + "/" + (row.path || `components/${row.name}/${row.name}.component`)
     : "";
 
-  async function openPackage(pkg: PackageRow, component: ComponentRow) {
+  function openPackage(pkg: PackageRow, component: ComponentRow) {
     setPriority(component, pkg);
-    selected = pkg;
-    selectedComponent = component;
+    selection = { component: component.name, name: pkg.name };
     changelogBranch = 'p11';
-    await loadChangelog(pkg, 'p11');
   }
 
-  async function switchChangelog(branch: ChangelogBranch) {
+  function switchChangelog(branch: ChangelogBranch) {
     if (branch === changelogBranch || !selected) return;
     changelogBranch = branch;
-    await loadChangelog(selected, branch);
   }
 
   async function loadChangelog(pkg: PackageRow, branch: ChangelogBranch) {
@@ -160,9 +182,12 @@
     changelog = [];
     changelogMode = 'range';
     changelogState = "Загрузка changelog…";
-    const snapshot = branch === 'p11' ? current : sisyphus;
-    const target = snapshot ? resolvePackage(snapshot, pkg.name) : undefined;
+    const target = branch === 'p11' ? resolvePackage(current, pkg.name) : resolveSisyphus(pkg.name);
     const after = target?.package;
+    if (!target || target.kind === 'pending') {
+      changelogState = "Проверяется RPM-поставщик; changelog загрузится после проверки.";
+      return;
+    }
     if (!after) {
       changelogState = target?.kind === 'ambiguous' || target?.kind === 'unknown'
         ? `Нельзя загрузить changelog ${branchLabel(branch)}: ${resolutionLabel(target)}.`
@@ -176,12 +201,12 @@
     if (providerChanged) {
       fullReason = "RPM-поставщик изменился. Общий диапазон changelog разных RPM не определяется автоматически. Показаны доступные записи выбранного RPM.";
     } else if (!before?.evr) {
-      fullReason = "Версия RPM в образе 11.1 не определена. Показаны доступные записи выбранной ветки; диапазон изменений от 11.1 определить нельзя.";
+      fullReason = `Версия RPM в образе ${release} не определена. Показаны доступные записи выбранной ветки; диапазон изменений от ${release} определить нельзя.`;
     }
     changelogMode = fullReason ? 'full' : 'range';
     try {
       const epochWarning = !fullReason && before?.epochKnown === false
-        ? "Полная RPM-версия не подтверждена в фиксированной базе 11.1. Границы changelog предварительные." : "";
+        ? `Полная RPM-версия не подтверждена в фиксированной базе ${release}. Границы changelog предварительные.` : "";
       if (request !== changelogRequest) return;
       if (!fullReason && before && compareEVR(before.evr, after.evr) === 0) {
         changelogState = epochWarning || "Версии совпадают; перехода между версиями нет.";
@@ -208,7 +233,8 @@
   function closePackage() {
     ++changelogRequest;
     changelogController?.abort();
-    selected = null;
+    selection = null;
+    runtimePriority.setPackage("");
   }
 </script>
 
@@ -223,20 +249,20 @@
   <div class="doc-top">
     <div>
       <h1>Компоненты и пакеты</h1>
-      <p>Состав редакций по alt-components-base{current ? ` ${current.definitions.package?.evr || current.definitions.tag} из снимка p11` : ""}; версии образа 11.1, p11 и Sisyphus</p>
+      <p>Состав редакций по alt-components-base{current ? ` ${current.definitions.package?.evr || current.definitions.tag} из снимка p11` : ""}; версии образа {release}, p11 и Sisyphus</p>
     </div>
   </div>
   <div class="doc-toolbar">
-    <label>Редакция <select bind:value={edition}>
+    <label>Редакция <select bind:value={edition} onchange={() => { closePackage(); expanded = null; sectionFilter = ""; categoryFilter = ""; }}>
       <option value="edition_server">Альт Сервер</option>
       <option value="edition_domain">Альт Домен</option>
     </select></label>
-    <label>Выпуск <select><option>11.1</option></select></label>
+    <label>Выпуск <select><option>{release}</option></select></label>
     <label>Архитектура <select bind:value={arch} onchange={() => {
       closePackage();
       expanded = null;
       void load();
-    }}><option>x86_64</option><option>aarch64</option></select></label>
+    }}>{#each ARCHITECTURES as architecture}<option>{architecture}</option>{/each}</select></label>
   </div>
   {#if loading}<div class="doc-message" role="status">Загрузка данных…{current ? " До завершения показан предыдущий успешный результат." : ""}</div>{/if}
   {#if error}<div class="doc-message doc-error" role="alert">{error}</div>{/if}
@@ -272,7 +298,7 @@
         <button class="doc-card-head" onclick={() => toggleComponent(row)} aria-expanded={expanded === row.name}>
           <span class="doc-chevron">{expanded === row.name ? "▾" : "▸"}</span>
           <span><strong>{row.title}</strong><small>{row.name} · {current.definitions.editions[edition]?.sections[row.section]?.title || row.section} · {current.definitions.categories[row.category || ""]?.title || row.category || "без категории"}</small></span>
-          <span class="doc-reason">{row.reason}</span>
+          <span class="doc-reason">{componentLabel(row)}</span>
         </button>
         {#if expanded === row.name}
           <div class="doc-card-body">
@@ -281,16 +307,16 @@
             {#if changeFilter}<p class="doc-definition">Пакетов по фильтру: {packagesForChangeFilter(row, changeFilter).length} из {row.rows.length}. Для полного состава выберите «Все пакеты».</p>{/if}
             <div class="doc-table-wrap">
               <table>
-                <thead><tr><th>Пакет</th><th>Версия в 11.1</th><th>Версия в p11</th><th>Версия в Sisyphus</th><th>Тип изменения</th></tr></thead>
+                <thead><tr><th>Пакет</th><th>Версия в {release}</th><th>Версия в p11</th><th>Версия в Sisyphus</th><th>Тип изменения</th></tr></thead>
                 <tbody>
                   {#each packagesForChangeFilter(row, changeFilter) as pkg}
-                    {@const sisyphusResolution = resolvePackage(sisyphus, pkg.name)}
+                    {@const sisyphusResolution = resolveSisyphus(pkg.name)}
                     <tr>
                       <td><button class="doc-package" onclick={() => openPackage(pkg, row)}>{pkg.name}</button></td>
                       <td>{@render packageVersion(pkg.beforeResolution, "нет в образе", pkg.before?.epochKnown === false && !!pkg.after?.evr.includes(':'))}</td>
                       <td>{@render packageVersion(pkg.afterResolution, "нет в p11")}</td>
                       <td>{@render packageVersion(sisyphusResolution, "нет в Sisyphus")}</td>
-                      <td>{pkg.change}{#if pkg.composition && pkg.composition !== pkg.change}; {pkg.composition}{/if}{#if pkg.availability && pkg.availability !== pkg.change}; {pkg.availability}{/if}{#if pkg.providerChanged && pkg.change !== 'изменился поставщик RPM'}; изменился поставщик RPM{/if}{#if pkg.pending}<small class="doc-cell-note">проверка продолжается</small>{/if}</td>
+                      <td>{changeLabel(pkg.change)}{#if pkg.composition && pkg.composition !== pkg.change}; {changeLabel(pkg.composition)}{/if}{#if pkg.availability && pkg.availability !== pkg.change}; {changeLabel(pkg.availability)}{/if}{#if pkg.providerChanged && pkg.change !== 'provider-changed'}; изменился поставщик RPM{/if}{#if pkg.pending}<small class="doc-cell-note">проверка продолжается</small>{/if}</td>
                     </tr>
                   {/each}
                 </tbody>
@@ -322,7 +348,7 @@
       <button aria-label="Changelog Sisyphus" aria-pressed={changelogBranch === 'sisyphus'} onclick={() => switchChangelog('sisyphus')}>Sisyphus<br /><strong>{@render packageVersion(selectedSisyphus, "нет в Sisyphus")}</strong></button>
     </div>
     {#if selectedProviderChanged}<p>Поставщик изменился: <code>{selected.beforeResolution?.name}</code> → <code>{selectedTarget?.name}</code> в {branchLabel(changelogBranch)}. Это изменение реального RPM, а не номера версии одного пакета.</p>{/if}
-    {#each [{label:"Образ 11.1", resolution:selected.beforeResolution, snapshot:image}, {label:"p11", resolution:selected.afterResolution, snapshot:current}, {label:"Sisyphus", resolution:selectedSisyphus, snapshot:sisyphus}] as state}
+    {#each [{label:`Образ ${release}`, resolution:selected.beforeResolution, snapshot:image}, {label:"p11", resolution:selected.afterResolution, snapshot:current}, {label:"Sisyphus", resolution:selectedSisyphus, snapshot:sisyphus}] as state}
       {#if state.resolution?.kind === 'provided' && state.resolution.source}
         <p>{state.label}: <code>{selected.name}</code> → <code>{state.resolution.name}</code>. <a href={state.resolution.source} target="_blank" rel="noreferrer">Подтверждение Provides в RPM ↗</a></p>
       {:else if state.resolution?.kind === 'ambiguous'}
@@ -333,7 +359,7 @@
       {/if}
     {/each}
     {#if selectedTarget?.package?.evr.includes(':') || displayedBefore?.evr.includes(':')}<p>Префикс «N:» — RPM epoch. Он учитывается при сравнении раньше version и release и не является ошибкой в номере версии.</p>{/if}
-    {#if displayedBefore?.epochSource}<p><a href={displayedBefore.epochSource} target="_blank" rel="noreferrer">Источник epoch версии 11.1 (changelog по хешу RPM) ↗</a></p>{/if}
+    {#if displayedBefore?.epochSource}<p><a href={displayedBefore.epochSource} target="_blank" rel="noreferrer">Источник epoch версии {release} (changelog по хешу RPM) ↗</a></p>{/if}
     <p>Затронутые компоненты: {affected.join(", ") || "нет данных"}</p>
     <h3>Changelog</h3>
     <p class="doc-changelog-range">{changelogMode === 'range' ? `Образ ${release} → ${branchLabel(changelogBranch)}` : `История RPM в ${branchLabel(changelogBranch)}`}{selectedTarget?.package ? ` · ${selectedTarget.name} · ${selectedTarget.package.evr}` : ''}</p>

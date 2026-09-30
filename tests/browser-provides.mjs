@@ -5,7 +5,7 @@ import {readFileSync} from 'node:fs';
 import {chromium} from 'playwright-core';
 import {fixtureRuntime} from './runtime-fixtures.mjs';
 
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||chromium.executablePath(),headless:true,args:['--no-sandbox']});
 const base=process.env.TEST_BASE_URL||'http://127.0.0.1:5173/';
 const aliases={'gvfs-utils':'libgio','alterator-browser-qt':'alterator-browser-qt6','alterator-pkg':'installer-alterator-pkg','kea-shell':'kea-admin','gtk-update-icon-cache':'gtk4-update-icon-cache','gtk2-theme-breeze':'gtk-theme-breeze','gtk3-theme-breeze':'gtk-theme-breeze','cups-ppd':'cups','tftp-server':'tftp-server-xinetd'};
 const components={'gvfs-utils':'gvfs','alterator-browser-qt':'alt-server-gnome-environment','alterator-pkg':'alt-server-gnome-environment','kea-shell':'dhcp-kea','gtk-update-icon-cache':'themes-gtk','gtk2-theme-breeze':'themes-gtk','gtk3-theme-breeze':'themes-gtk','cups-ppd':'cups','tftp-server':'tftp-server'};

@@ -73,7 +73,7 @@ test('release validators reject identity, historical definitions and unproven Pr
   assert.throws(()=>validateRelease({...valid,providers:{alias:{candidates:['tool'],source:'fixture:unproven',complete:false}}},'11.1','x86_64'));
   assert.throws(()=>releaseEntry({schema:1,release:'11.1',preparedAt:date,architectures:{x86_64:{file:'../../anything.json'}}},'11.1','x86_64'));
   const after={...valid,branch:'p11',definitions:valid.definitions,packages:{...valid.packages,tool:{...valid.packages.tool,evr:'2.0-alt1'}}};
-  assert.match(compareImageSnapshot(valid,after,'edition_server')[0].rows.find(row=>row.name==='tool').change,/epoch образа неизвестен/);
+  assert.match(compareImageSnapshot(valid,after,'edition_server')[0].rows.find(row=>row.name==='tool').change,/epoch-unknown/);
 });
 
 for(const arch of ['x86_64','aarch64']) test(`published fixed 11.1 baseline is valid and independent of p11 for ${arch}`,async()=>{

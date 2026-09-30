@@ -1,4 +1,4 @@
-import type { Snapshot } from './model.ts';
+import type { Snapshot, FrozenReleaseSnapshot } from './model.ts';
 
 export type ReleaseEntry = {
   file: string; sha256: string; uuid: string; arch: string; packageCount: number;
@@ -25,7 +25,7 @@ export function releaseEntry(value: unknown, release: string, arch: string): Rel
 
 // Run both during preparation and in the browser. No package/definition from
 // a moving branch may stand in for a missing historical field.
-export function validateRelease(snapshot: Snapshot, release: string, arch: string, entry?: ReleaseEntry): void {
+export function validateRelease(snapshot: Snapshot, release: string, arch: string, entry?: ReleaseEntry): asserts snapshot is FrozenReleaseSnapshot {
   const defs = snapshot?.definitions;
   if (snapshot?.schema !== 1 || snapshot.release !== release || snapshot.arch !== arch || snapshot.branch ||
       snapshot.inventoryKind !== 'image' || !snapshot.id || !snapshot.source ||

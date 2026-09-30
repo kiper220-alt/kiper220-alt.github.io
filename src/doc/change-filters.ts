@@ -6,7 +6,7 @@ export const changeFilters = [
   { value: 'included', label: 'Включены в компонент' },
   { value: 'excluded', label: 'Исключены из компонента' },
   { value: 'provider-changed', label: 'Сменился RPM-поставщик' },
-  { value: 'unchanged', label: 'Без изменений' },
+  { value: 'unchanged', label: 'unchanged' },
 ] as const;
 
 export type PackageChangeFilter = typeof changeFilters[number]['value'];
@@ -20,17 +20,17 @@ export function isPackageChangeFilter(filter: ChangeFilter): boolean {
 
 export function matchesPackageChange(pkg: PackageRow, filter: ChangeFilter): boolean {
   switch (filter) {
-    case 'updated': return pkg.change === 'обновлён';
-    case 'downgraded': return pkg.change === 'понижен';
+    case 'updated': return pkg.change === 'updated';
+    case 'downgraded': return pkg.change === 'downgraded';
     case 'provider-changed': return !!pkg.providerChanged;
-    case 'ambiguous-provider': return pkg.change === 'неоднозначный поставщик RPM';
-    case 'missing-p11': return !!pkg.before && !pkg.after && (pkg.change === 'отсутствует в p11' || pkg.availability === 'отсутствует в p11');
-    case 'included': return pkg.composition === 'включён в компонент' || pkg.change === 'включён в компонент';
-    case 'excluded': return pkg.composition === 'исключён из компонента' || pkg.change === 'исключён из компонента';
-    case 'unchanged': return pkg.change === 'без изменений' && !pkg.composition && !pkg.availability && !pkg.providerChanged;
+    case 'ambiguous-provider': return pkg.change === 'ambiguous-provider';
+    case 'missing-p11': return !!pkg.before && !pkg.after && (pkg.change === 'missing-p11' || pkg.availability === 'missing-p11');
+    case 'included': return pkg.composition === 'included' || pkg.change === 'included';
+    case 'excluded': return pkg.composition === 'excluded' || pkg.change === 'excluded';
+    case 'unchanged': return pkg.change === 'unchanged' && !pkg.composition && !pkg.availability && !pkg.providerChanged;
     case 'no-image': return !pkg.before && !!pkg.after && (!pkg.beforeResolution || pkg.beforeResolution.kind === 'missing');
-    case 'missing-both': return pkg.change === 'нет в образе и p11' || pkg.availability === 'нет в образе и p11';
-    case 'uncertain': return ['нет данных', 'неоднозначный поставщик RPM', 'epoch образа неизвестен', 'изменился version-release; epoch образа неизвестен'].includes(pkg.change);
+    case 'missing-both': return pkg.change === 'missing-both' || pkg.availability === 'missing-both';
+    case 'uncertain': return ['unknown', 'ambiguous-provider', 'epoch-unknown', 'version-changed-epoch-unknown'].includes(pkg.change);
     default: return true;
   }
 }
@@ -40,14 +40,14 @@ export function matchesComponentChange(row: ComponentRow, filter: ChangeFilter):
   const composition = row.kernelModulesChanged || row.rows.some(pkg => !!pkg.composition);
   switch (filter) {
     case 'changed': return row.isNew || row.removed || row.moved || composition || row.rows.some(pkg =>
-      ['обновлён', 'понижен', 'появился в p11', 'изменился version-release; epoch образа неизвестен'].includes(pkg.change) || pkg.providerChanged || matchesPackageChange(pkg, 'missing-p11'));
+      ['updated', 'downgraded', 'added-p11', 'version-changed-epoch-unknown'].includes(pkg.change) || pkg.providerChanged || matchesPackageChange(pkg, 'missing-p11'));
     case 'composition': return row.isNew || row.removed || composition;
     case 'new-component': return row.isNew;
     case 'removed-component': return row.removed;
     case 'moved': return row.moved;
     case 'kernel-modules': return row.kernelModules.length > 0;
     case 'unchanged': return !row.isNew && !row.removed && !row.moved && !composition && !row.kernelModules.length && row.rows.length > 0 &&
-      row.rows.every(pkg => pkg.change === 'без изменений' && !pkg.availability && !pkg.providerChanged);
+      row.rows.every(pkg => pkg.change === 'unchanged' && !pkg.availability && !pkg.providerChanged);
     default: return true;
   }
 }

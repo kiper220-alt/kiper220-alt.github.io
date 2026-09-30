@@ -25,14 +25,14 @@ for (const arch of ['x86_64', 'aarch64']) {
       const rows = compareImageSnapshot(image, p11, edition);
       assert.ok(rows.length > 100);
       assert.ok(rows.some(row => row.rows.some(pkg => pkg.before && pkg.after)));
-      assert.ok(rows.some(row => row.rows.some(pkg => pkg.change === 'нет в образе 11.1')));
+      assert.ok(rows.some(row => row.rows.some(pkg => pkg.change === 'missing-image')));
       const p7zip = rows.find(row => row.name === 'p7zip');
-      assert.equal(p7zip.reason, 'Изменился поставщик RPM');
+      assert.equal(p7zip.reason, 'provider-changed');
       assert.equal(p7zip.rows[0].beforeResolution.name, 'p7zip');
       assert.equal(p7zip.rows[0].afterResolution.name, '7-zip');
       assert.equal(p7zip.rows[0].providerChanged, true);
       const hplip = rows.find(row => row.name === 'hplip-gui');
-      assert.equal(hplip.rows.find(pkg => pkg.name === 'hplip-gui').change, 'обновлён');
+      assert.equal(hplip.rows.find(pkg => pkg.name === 'hplip-gui').change, 'updated');
       assert.equal(rows.flatMap(row => row.rows).some(pkg => pkg.name === 'kernel-modules-tripso'), false);
       assert.ok(rows.find(row => row.name === 'kernel-modules-tripso').kernelModules.includes('kernel-modules-tripso'));
       const aliases = {
@@ -51,7 +51,7 @@ for (const arch of ['x86_64', 'aarch64']) {
           assert.equal(pkg.beforeResolution.name,actual,alias);
           assert.equal(pkg.afterResolution.name,actual,alias);
           assert.equal(pkg.before.evr,image.packages[actual].evr,alias);
-          assert.ok(['обновлён','без изменений','исключён из компонента'].includes(pkg.change),alias);
+          assert.ok(['updated','unchanged','excluded'].includes(pkg.change),alias);
         }
         assert.notEqual(resolvePackage(sisyphus,alias).kind,'missing',alias);
       }

@@ -6,7 +6,7 @@ import {chromium} from 'playwright-core';
 import {fixtureRuntime} from './runtime-fixtures.mjs';
 
 const load=name=>JSON.parse(readFileSync(new URL(`../public/doc-data/${name}.json`,import.meta.url)));
-const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',headless:true,args:['--no-sandbox']});
+const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||chromium.executablePath(),headless:true,args:['--no-sandbox']});
 try {
   for (const mode of ['race','missing','error','no-baseline','different-provider']) {
     const page=await browser.newPage({viewport:{width:390,height:900}});

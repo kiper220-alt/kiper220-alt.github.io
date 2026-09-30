@@ -1,3 +1,4 @@
+import { readResponse } from './http.ts';
 import type { Package } from './model';
 
 export type ChangelogBranch = 'p11' | 'sisyphus';
@@ -11,13 +12,13 @@ export async function fetchSourceChangelog(
   pkg: Package,
   signal?: AbortSignal,
   request: typeof fetch = fetch,
+  timeoutMs = 30000,
 ): Promise<ChangelogEntry[]> {
-  const response = await request(
-    `https://rdb.altlinux.org/api/site/source_package_versions?name=${encodeURIComponent(pkg.source)}`,
-    { signal },
-  );
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const versions = await response.json();
+  const json = (url: string) => readResponse(url, { signal }, request, async response => {
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  }, timeoutMs);
+  const versions = await json(`https://rdb.altlinux.org/api/site/source_package_versions?name=${encodeURIComponent(pkg.source)}`);
   if (versions.request_args?.name !== pkg.source || !Array.isArray(versions.versions)) {
     throw new Error('источник версий вернул неполные или несоответствующие данные');
   }
@@ -29,12 +30,7 @@ export async function fetchSourceChangelog(
     throw new Error(`исходная сборка ${pkg.source} ${vr} не подтверждена в ${branchLabel(branch)}; обновите снимки данных`);
   }
   const hash = [...hashes][0];
-  const logResponse = await request(
-    `https://rdb.altlinux.org/api/site/package_changelog/${encodeURIComponent(hash)}?changelog_last=1000`,
-    { signal },
-  );
-  if (!logResponse.ok) throw new Error(`HTTP ${logResponse.status}`);
-  const result = await logResponse.json();
+  const result = await json(`https://rdb.altlinux.org/api/site/package_changelog/${encodeURIComponent(hash)}?changelog_last=1000`);
   if (String(result.pkghash) !== hash || !Array.isArray(result.changelog)) {
     throw new Error('источник changelog не подтвердил выбранную сборку');
   }

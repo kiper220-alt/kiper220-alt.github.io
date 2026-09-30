@@ -1,3 +1,7 @@
+import { compareEVR } from '../domain/rpm.ts';
+import { RELEASE } from './config.ts';
+export { compareEVR, rpmvercmp } from '../domain/rpm.ts';
+
 // The release baseline is prepared once; moving branch snapshots are acquired
 // in the browser. Comparison is independent of both acquisition mechanisms.
 // Version comparison follows rpm/rpmio/rpmvercmp.cc; vectors live in tests/.
@@ -5,65 +9,22 @@ export type Package = { evr: string; source: string; arch: string; epochKnown?: 
 export type Component = { name: string; title: string; category?: string; path?: string; packages: Record<string, { arch?: string[]; exclude_arch?: string[]; kernel_module?: boolean }> };
 export type Definitions = { revision: string; tag: string; source: string; package?: { name: string; evr: string; branch: string; sourceHash: string; metadataSource: string }; categories: Record<string, { name: string; parent?: string; title: string }>; components: Record<string, Component>; editions: Record<string, { name: string; title: string; arches: string[]; sections: Record<string, { title: string; components: string[] }> }> };
 export type ProviderRecord = { candidates: string[]; source: string; evidence?: Record<string, string>; complete: boolean; scope?: string; status?: 'pending' | 'complete' | 'failed' };
-export type Snapshot = { schema: number; id: string; arch: string; release?: string; branch?: string; obtainedAt?: string; frozenAt?: string; source: string; definitions: Definitions; packages: Record<string, Package>; providers?: Record<string, ProviderRecord>; providerCheckedNames?: string[]; repositoryAbsent?: string[]; missingExplicit?: string[]; inventoryComplete?: boolean; inventoryKind?: 'image' };
+type SnapshotData = {
+  schema: number; id: string; arch: string; source: string; definitions: Definitions;
+  packages: Record<string, Package>; providers?: Record<string, ProviderRecord>;
+  obtainedAt?: string; frozenAt?: string; providerCheckedNames?: string[];
+  repositoryAbsent?: string[]; inventoryComplete?: boolean;
+};
+export type Branch = 'p11' | 'sisyphus';
+export type BranchSnapshot = SnapshotData & { branch: Branch; release?: never; inventoryKind?: never };
+export type ReleaseSnapshot = SnapshotData & { release: string; branch?: never; inventoryKind?: 'image' };
+export type FrozenReleaseSnapshot = ReleaseSnapshot & { inventoryKind: 'image'; frozenAt: string; providerCheckedNames: string[] };
+export type Snapshot = BranchSnapshot | ReleaseSnapshot;
 export type PackageResolution = { kind: 'direct' | 'provided' | 'ambiguous' | 'missing' | 'unknown' | 'pending'; name?: string; package?: Package; candidates: string[]; source?: string };
-export type Change = 'обновлён' | 'понижен' | 'без изменений' | 'включён в компонент' | 'исключён из компонента' | 'появился в p11' | 'отсутствует в p11' | 'нет в образе 11.1' | 'нет в образе и p11' | 'изменился version-release; epoch образа неизвестен' | 'epoch образа неизвестен' | 'неоднозначный поставщик RPM' | 'изменился поставщик RPM' | 'нет данных' | 'проверяется';
+export type Change = 'updated' | 'downgraded' | 'unchanged' | 'included' | 'excluded' | 'added-p11' | 'missing-p11' | 'missing-image' | 'missing-both' | 'version-changed-epoch-unknown' | 'epoch-unknown' | 'ambiguous-provider' | 'provider-changed' | 'unknown' | 'pending';
 export type PackageRow = { name: string; before?: Package; after?: Package; beforeResolution?: PackageResolution; afterResolution?: PackageResolution; providerChanged?: boolean; change: Change; composition?: Change; availability?: Change; source?: string; pending?: boolean };
-export type ComponentRow = { name: string; title: string; section: string; category?: string; path?: string; isNew: boolean; removed: boolean; moved: boolean; rows: PackageRow[]; kernelModules: string[]; kernelModulesChanged: boolean; reason: string };
-
-const digit = (c: string) => /^[0-9]$/.test(c);
-const alpha = (c: string) => /^[A-Za-z]$/.test(c);
-const alnum = (c: string) => digit(c) || alpha(c);
-
-export function rpmvercmp(a: string, b: string): number {
-  if (a === b) return 0;
-  let i = 0, j = 0;
-  while (i < a.length || j < b.length) {
-    while (i < a.length && !alnum(a[i]) && a[i] !== '~' && a[i] !== '^') i++;
-    while (j < b.length && !alnum(b[j]) && b[j] !== '~' && b[j] !== '^') j++;
-    if (a[i] === '~' || b[j] === '~') {
-      if (a[i] !== '~') return 1;
-      if (b[j] !== '~') return -1;
-      i++; j++; continue;
-    }
-    if (a[i] === '^' || b[j] === '^') {
-      if (i >= a.length) return -1;
-      if (j >= b.length) return 1;
-      if (a[i] !== '^') return 1;
-      if (b[j] !== '^') return -1;
-      i++; j++; continue;
-    }
-    if (i >= a.length || j >= b.length) break;
-    const numeric = digit(a[i]);
-    let e1 = i, e2 = j;
-    while (e1 < a.length && (numeric ? digit(a[e1]) : alpha(a[e1]))) e1++;
-    while (e2 < b.length && (numeric ? digit(b[e2]) : alpha(b[e2]))) e2++;
-    if (e1 === i) return -1;
-    if (e2 === j) return numeric ? 1 : -1;
-    let s1 = a.slice(i, e1), s2 = b.slice(j, e2);
-    if (numeric) {
-      s1 = s1.replace(/^0+/, ''); s2 = s2.replace(/^0+/, '');
-      if (s1.length !== s2.length) return Math.sign(s1.length - s2.length);
-    }
-    if (s1 !== s2) return s1 < s2 ? -1 : 1;
-    i = e1; j = e2;
-  }
-  return Math.sign((i < a.length ? 1 : 0) - (j < b.length ? 1 : 0));
-}
-
-function splitEVR(evr: string): [bigint, string, string] {
-  const colon = evr.indexOf(':');
-  const epoch = colon < 0 ? 0n : BigInt(evr.slice(0, colon));
-  const rest = evr.slice(colon + 1);
-  const dash = rest.indexOf('-');
-  return [epoch, dash < 0 ? rest : rest.slice(0, dash), dash < 0 ? '' : rest.slice(dash + 1)];
-}
-
-export function compareEVR(a: string, b: string): number {
-  const x = splitEVR(a), y = splitEVR(b);
-  if (x[0] !== y[0]) return x[0] > y[0] ? 1 : -1;
-  return rpmvercmp(x[1], y[1]) || rpmvercmp(x[2], y[2]);
-}
+export type ComponentChange = 'composition' | 'provider-changed' | 'ambiguous-provider' | 'missing-p11' | 'versions-changed' | 'version-changed-epoch-unknown' | 'epoch-unknown' | 'missing-both' | 'missing-image' | 'pending' | 'unknown' | 'kernel-only' | 'kernel-uncompared' | 'unchanged' | 'new' | 'removed' | 'moved';
+export type ComponentRow = { name: string; title: string; section: string; category?: string; path?: string; isNew: boolean; removed: boolean; moved: boolean; rows: PackageRow[]; kernelModules: string[]; kernelModulesChanged: boolean; reason: ComponentChange; pending?: boolean };
 
 export function validP11Definitions(snapshot: Snapshot): boolean {
   const definitions = snapshot.definitions;
@@ -108,13 +69,6 @@ export function resolvePackage(snapshot: Snapshot | null | undefined, name: stri
   return { kind: 'missing', candidates: [] };
 }
 
-export function resolutionLabel(resolution: PackageResolution | undefined): string {
-  if (resolution?.kind === 'pending') return 'проверяется RPM-поставщик';
-  if (resolution?.kind === 'ambiguous') return 'несколько RPM-поставщиков';
-  if (resolution?.kind === 'unknown') return 'RPM-поставщик не определён';
-  return '';
-}
-
 function uncertainResolution(resolution: PackageResolution | undefined): boolean {
   return resolution?.kind === 'ambiguous' || resolution?.kind === 'unknown' || resolution?.kind === 'pending';
 }
@@ -151,14 +105,14 @@ export function compareSnapshots(before: Snapshot, after: Snapshot, edition: str
   return compareInternal(before, after, edition, true);
 }
 
-export function compareDefinitionsOnly(definitions: Definitions, after: Snapshot, edition: string, release = '11.1'): ComponentRow[] {
+export function compareDefinitionsOnly(definitions: Definitions, after: Snapshot, edition: string, release = RELEASE): ComponentRow[] {
   const partial: Snapshot = { schema: 1, id: 'definitions-only', arch: after.arch, release, source: definitions.source,
     definitions, packages: {}, inventoryComplete: false };
   return compareInternal(partial, after, edition, false);
 }
 
 export function compareImageSnapshot(image: Snapshot, after: Snapshot, edition: string): ComponentRow[] {
-  if (image.arch !== after.arch || image.inventoryKind !== 'image' || image.release !== '11.1' || after.branch !== 'p11') {
+  if (image.arch !== after.arch || image.inventoryKind !== 'image' || image.release !== RELEASE || after.branch !== 'p11') {
     throw new Error('Несовместимые снимки образа и p11');
   }
   const rows = compareInternal(image, after, edition, true);
@@ -166,41 +120,41 @@ export function compareImageSnapshot(image: Snapshot, after: Snapshot, edition: 
     for (const pkg of component.rows) {
       if (uncertainResolution(pkg.beforeResolution) || uncertainResolution(pkg.afterResolution)) continue;
       if (!pkg.before && !pkg.after) {
-        pkg.change = pkg.composition || 'нет в образе и p11';
-        pkg.availability = 'нет в образе и p11';
+        pkg.change = pkg.composition || 'missing-both';
+        pkg.availability = 'missing-both';
       }
       if (!pkg.before && pkg.after) {
         if (pkg.composition) {
           pkg.change = pkg.composition;
-          pkg.availability = 'нет в образе 11.1';
+          pkg.availability = 'missing-image';
         } else {
-          pkg.change = 'нет в образе 11.1';
+          pkg.change = 'missing-image';
         }
       }
       if (pkg.before && pkg.after && !pkg.providerChanged && !pkg.composition && pkg.before.epochKnown === false &&
           (image.frozenAt || pkg.before.epochStatus === 'failed' || pkg.after.evr.includes(':'))) {
         const oldVR = pkg.before.evr.replace(/^[0-9]+:/, '');
         const newVR = pkg.after.evr.replace(/^[0-9]+:/, '');
-        pkg.change = compareEVR(newVR, oldVR) === 0 ? 'epoch образа неизвестен' : 'изменился version-release; epoch образа неизвестен';
+        pkg.change = compareEVR(newVR, oldVR) === 0 ? 'epoch-unknown' : 'version-changed-epoch-unknown';
       }
-      if (pkg.pending && !pkg.composition && !pkg.providerChanged) pkg.change = 'проверяется';
+      if (pkg.pending && !pkg.composition && !pkg.providerChanged) pkg.change = 'pending';
     }
     if (!component.isNew && !component.removed && !component.moved) {
-      component.reason = component.kernelModulesChanged || component.rows.some(pkg => pkg.composition) ? 'Изменился состав' :
-        component.rows.some(pkg => pkg.providerChanged) ? 'Изменился поставщик RPM' :
-        component.rows.some(pkg => pkg.change === 'неоднозначный поставщик RPM') ? 'Несколько RPM-поставщиков' :
-        component.rows.some(pkg => pkg.change === 'отсутствует в p11' || pkg.availability === 'отсутствует в p11') ? 'Пакет отсутствует в p11' :
-        component.rows.some(pkg => pkg.change === 'обновлён' || pkg.change === 'понижен') ? 'Обновились пакеты' :
-        component.rows.some(pkg => pkg.change === 'изменился version-release; epoch образа неизвестен') ? 'Изменился version-release; epoch неизвестен' :
-        component.rows.some(pkg => pkg.change === 'epoch образа неизвестен') ? 'Epoch образа неизвестен' :
-        component.rows.some(pkg => pkg.change === 'нет в образе и p11') ? 'Пакеты не найдены в снимках' :
-        component.rows.some(pkg => pkg.change === 'нет в образе 11.1') ? 'Часть пакетов не входит в образ' :
-        component.rows.some(pkg => pkg.pending) ? 'Проверяются данные' :
-        component.rows.some(pkg => pkg.change === 'нет данных') ? 'Нет данных' :
-        component.rows.length === 0 && component.kernelModules.length ? 'Шаблоны модулей ядра' :
-        component.kernelModules.length ? 'Модули ядра не сравнивались' : 'Без изменений';
+      component.reason = component.kernelModulesChanged || component.rows.some(pkg => pkg.composition) ? 'composition' :
+        component.rows.some(pkg => pkg.providerChanged) ? 'provider-changed' :
+        component.rows.some(pkg => pkg.change === 'ambiguous-provider') ? 'ambiguous-provider' :
+        component.rows.some(pkg => pkg.change === 'missing-p11' || pkg.availability === 'missing-p11') ? 'missing-p11' :
+        component.rows.some(pkg => pkg.change === 'updated' || pkg.change === 'downgraded') ? 'versions-changed' :
+        component.rows.some(pkg => pkg.change === 'version-changed-epoch-unknown') ? 'version-changed-epoch-unknown' :
+        component.rows.some(pkg => pkg.change === 'epoch-unknown') ? 'epoch-unknown' :
+        component.rows.some(pkg => pkg.change === 'missing-both') ? 'missing-both' :
+        component.rows.some(pkg => pkg.change === 'missing-image') ? 'missing-image' :
+        component.rows.some(pkg => pkg.pending) ? 'pending' :
+        component.rows.some(pkg => pkg.change === 'unknown') ? 'unknown' :
+        component.rows.length === 0 && component.kernelModules.length ? 'kernel-only' :
+        component.kernelModules.length ? 'kernel-uncompared' : 'unchanged';
     }
-    if (component.rows.some(pkg => pkg.pending) && component.reason !== 'Проверяются данные') component.reason += ' · проверка продолжается';
+    component.pending = component.rows.some(pkg => pkg.pending);
   }
   return rows;
 }
@@ -221,31 +175,31 @@ function compareInternal(before: Snapshot, after: Snapshot, edition: string, com
       const providerChanged = !!oldPkg && !!newPkg && beforeResolution.name !== afterResolution.name;
       const pending = beforeResolution.kind === 'pending' || afterResolution.kind === 'pending' ||
         !!oldPkg && !!newPkg && !providerChanged && oldPkg.epochStatus === 'pending';
-      let change: Change = 'без изменений';
-      const composition: Change | undefined = !oldNames.has(pkg) ? 'включён в компонент' : !newNames.has(pkg) ? 'исключён из компонента' : undefined;
-      const availability: Change | undefined = !newPkg && afterResolution.kind === 'missing' && after.missingExplicit?.includes(pkg) ? 'отсутствует в p11' : undefined;
-      if (!oldNames.has(pkg)) change = !complete || oldPkg ? 'включён в компонент' : before.repositoryAbsent?.includes(pkg) ? 'появился в p11' : 'нет данных';
-      else if (!newNames.has(pkg)) change = 'исключён из компонента';
-      else if (!complete) change = 'нет данных';
-      else if (!oldPkg && !before.repositoryAbsent?.includes(pkg)) change = 'нет данных';
-      else if (!newPkg && !after.missingExplicit?.includes(pkg)) change = 'нет данных';
-      else if (!oldPkg && newPkg) change = 'появился в p11';
-      else if (oldPkg && !newPkg) change = 'отсутствует в p11';
+      let change: Change = 'unchanged';
+      const composition: Change | undefined = !oldNames.has(pkg) ? 'included' : !newNames.has(pkg) ? 'excluded' : undefined;
+      const availability: Change | undefined = !newPkg && afterResolution.kind === 'missing' ? 'missing-p11' : undefined;
+      if (!oldNames.has(pkg)) change = !complete || oldPkg ? 'included' : before.repositoryAbsent?.includes(pkg) ? 'added-p11' : 'unknown';
+      else if (!newNames.has(pkg)) change = 'excluded';
+      else if (!complete) change = 'unknown';
+      else if (!oldPkg && !before.repositoryAbsent?.includes(pkg)) change = 'unknown';
+      else if (!newPkg && afterResolution.kind !== 'missing') change = 'unknown';
+      else if (!oldPkg && newPkg) change = 'added-p11';
+      else if (oldPkg && !newPkg) change = 'missing-p11';
       else if (oldPkg && newPkg) {
         const order = compareEVR(newPkg.evr, oldPkg.evr);
-        change = order > 0 ? 'обновлён' : order < 0 ? 'понижен' : 'без изменений';
+        change = order > 0 ? 'updated' : order < 0 ? 'downgraded' : 'unchanged';
       }
-      if (complete && (beforeResolution.kind === 'ambiguous' || afterResolution.kind === 'ambiguous')) change = 'неоднозначный поставщик RPM';
-      else if (complete && (beforeResolution.kind === 'unknown' || afterResolution.kind === 'unknown')) change = 'нет данных';
-      else if (complete && pending && !composition) change = 'проверяется';
-      else if (providerChanged && !composition) change = 'изменился поставщик RPM';
+      if (complete && (beforeResolution.kind === 'ambiguous' || afterResolution.kind === 'ambiguous')) change = 'ambiguous-provider';
+      else if (complete && (beforeResolution.kind === 'unknown' || afterResolution.kind === 'unknown')) change = 'unknown';
+      else if (complete && pending && !composition) change = 'pending';
+      else if (providerChanged && !composition) change = 'provider-changed';
       rows.push({ name: pkg, before: oldPkg, after: newPkg, beforeResolution, afterResolution, providerChanged, change, composition, availability, source: newPkg?.source || oldPkg?.source, pending });
     }
     const isNew = !first.has(name), removed = !last.has(name), moved = first.has(name) && last.has(name) && (first.get(name) !== last.get(name) || oldDef?.category !== newDef?.category);
     const composition = kernelModulesChanged || rows.some(row => row.composition);
-    const unavailable = rows.some(row => row.availability === 'отсутствует в p11' || row.change === 'отсутствует в p11');
-    const changed = rows.some(row => row.change === 'обновлён' || row.change === 'понижен');
-    const reason = isNew ? 'Новый компонент' : removed ? 'Компонент удалён' : moved ? 'Изменён раздел или категория' : composition ? 'Изменился состав' : rows.some(row => row.providerChanged) ? 'Изменился поставщик RPM' : rows.some(row => row.change === 'неоднозначный поставщик RPM') ? 'Несколько RPM-поставщиков' : unavailable ? 'Пакет отсутствует в p11' : changed ? 'Обновились пакеты' : rows.some(row => row.change === 'нет данных') ? 'Нет данных' : 'Без изменений';
+    const unavailable = rows.some(row => row.availability === 'missing-p11' || row.change === 'missing-p11');
+    const changed = rows.some(row => row.change === 'updated' || row.change === 'downgraded');
+    const reason = isNew ? 'new' : removed ? 'removed' : moved ? 'moved' : composition ? 'composition' : rows.some(row => row.providerChanged) ? 'provider-changed' : rows.some(row => row.change === 'ambiguous-provider') ? 'ambiguous-provider' : unavailable ? 'missing-p11' : changed ? 'versions-changed' : rows.some(row => row.change === 'unknown') ? 'unknown' : 'unchanged';
     output.push({ name, title: newDef?.title || oldDef?.title || name, section: last.get(name) || first.get(name) || '', category: newDef?.category || oldDef?.category, path: newDef?.path || oldDef?.path, isNew, removed, moved, rows: rows.sort((a,b) => a.name.localeCompare(b.name)), kernelModules: newKernel.length ? newKernel : oldKernel, kernelModulesChanged, reason });
   }
   return output.sort((a,b) => a.title.localeCompare(b.title, 'ru'));
