@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "prepare:release": "node --experimental-strip-types scripts/prepare-release.mjs"
+    "prepare:release": "node --experimental-strip-types scripts/prepare-release.mjs",
+    "test:browser": "node scripts/test-browser.mjs"
   },
   "devDependencies": {
     "@lucide/svelte": "^0.509.0",
