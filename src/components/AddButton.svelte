@@ -12,11 +12,12 @@
     import {Skeleton} from "$lib/components/ui/skeleton";
 
     interface Props {
-        open: boolean;
+        open?: boolean;
         variant: "link" | "default" | "destructive" | "outline" | "secondary" | "ghost" | undefined;
         onadd?: (name: string, packages: string[]) => void;
         ignore: string[];
         class: string;
+        tabindex?: number;
     }
 
     let {

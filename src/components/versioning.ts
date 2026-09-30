@@ -1,3 +1,5 @@
+import { compareEVR } from '../doc/model';
+
 export type VersionUnit = string | number;
 export type Version = VersionUnit[];
 
@@ -55,5 +57,6 @@ export function compareVersionsString(version1: string, version2: string): numbe
     if (version1 !== "" && version2 === "") {
         return 1;
     }
-    return compareVersions(lexingVersion(version1), lexingVersion(version2));
+    if (version1 === '' && version2 !== '') return -1;
+    return compareEVR(version1, version2);
 }

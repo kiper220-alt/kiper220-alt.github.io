@@ -1,5 +1,5 @@
 import type {SiteFingPackagesModel, SiteFingPackagesPackageModel} from "$rdb/";
-import { siteApiInstance } from "./api.ts";
+import { siteApiInstance } from "./api";
 
 export class FindResultElement {
     name: string | null = null;

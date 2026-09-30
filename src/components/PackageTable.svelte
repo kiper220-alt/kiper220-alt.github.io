@@ -2,7 +2,7 @@
     import X from "@lucide/svelte/icons/x";
     import "./api";
     import * as rdb from "$rdb/";
-    import {compareVersions} from "$components/versioning";
+    import {compareVersionsString} from "$components/versioning";
 
     let data = $state(new Map<string, Map<string, string>>());
 
@@ -52,7 +52,7 @@
                 });
 
                 // select maximal avalible version.
-                packageList = packageList.sort((a, b) => -compareVersions(a[1], b[1]));
+                packageList = packageList.sort((a, b) => -compareVersionsString(a[1], b[1]));
                 for (let i = 0; i < packageList.length; i++) {
                     for (let j = i + 1; j < packageList.length;) {
                         if (packageList[i][0] === packageList[j][0]) {
@@ -79,7 +79,6 @@
     import { branchList, defaultSettings } from './settings';
     import { packageApiInstance } from "./api";
     import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
-    import { compareVersionsString } from "./versioning";
     import { cn } from "$lib/utils";
 
     interface Props {

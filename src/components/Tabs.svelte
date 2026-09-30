@@ -121,7 +121,7 @@
             class="sticky right-0 m-2 min-h-7 min-w-7 h-7 w-7"
             ignore={tabs}
             onadd={onadd}
-            tabindex="-1"
+            tabindex={-1}
             variant="default"
     />
 </div>
