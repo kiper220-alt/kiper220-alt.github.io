@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "release": "11.1",
+  "preparedAt": "2026-09-30T10:50:16.667Z",
+  "architectures": {
+    "x86_64": {
+      "file": "x86_64-ab5127356b99f9bbc769f0569bd54e6153f42f4124bee120ec61c5cf4ac7e893.json",
+      "sha256": "ab5127356b99f9bbc769f0569bd54e6153f42f4124bee120ec61c5cf4ac7e893",
+      "uuid": "8df171cc-204c-46fa-a090-98e1d470b9a0",
+      "arch": "x86_64",
+      "packageCount": 3116,
+      "definitionTag": "0.10.3-alt1",
+      "definitionRevision": "e4b0b4231dff2a589b917ed27faf8a96db80b6aa"
+    },
+    "aarch64": {
+      "file": "aarch64-846b335940de8cd2b00ab9d023350a82c4b726e31ec9028866b32218565b55c5.json",
+      "sha256": "846b335940de8cd2b00ab9d023350a82c4b726e31ec9028866b32218565b55c5",
+      "uuid": "39d555a9-1b6d-4024-9b37-4be18538bb05",
+      "arch": "aarch64",
+      "packageCount": 3051,
+      "definitionTag": "0.10.3-alt1",
+      "definitionRevision": "e4b0b4231dff2a589b917ed27faf8a96db80b6aa"
+    }
+  }
+}
