@@ -1,0 +1,323 @@
+.site-modes {
+  display: flex;
+  gap: 4px;
+  padding: 10px 16px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.site-modes button {
+  border: 1px solid hsl(var(--border));
+  border-radius: 7px;
+  padding: 7px 11px;
+  background: hsl(var(--secondary));
+  cursor: pointer;
+}
+.site-modes .active {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+.doc-shell {
+  max-width: 1500px;
+  margin: auto;
+  padding: 24px 22px 80px;
+  color: hsl(var(--foreground));
+}
+.doc-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+.doc-top h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+.doc-top p,
+.doc-count,
+.doc-card-head small {
+  color: hsl(var(--muted-foreground));
+  font-size: 0.85rem;
+}
+.doc-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+  margin: 18px 0;
+}
+.doc-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+}
+.doc-shell select,
+.doc-shell input {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 8px;
+  min-height: 36px;
+}
+.doc-filters input {
+  flex: 2;
+  min-width: 180px;
+}
+.doc-filters select {
+  flex: 1;
+  min-width: 140px;
+}
+.doc-sources {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.77rem;
+  color: hsl(var(--muted-foreground));
+  margin: 7px 0;
+  word-break: break-all;
+}
+.doc-shell a,
+.doc-panel a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+.doc-message {
+  overflow-wrap: anywhere;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  background: hsl(var(--card));
+}
+.doc-error {
+  border-color: #bc5555;
+}
+.doc-warning {
+  border-color: #ad8d47;
+}
+.doc-count {
+  margin: 10px 0;
+}
+.doc-card {
+  border: 1px solid hsl(var(--border));
+  border-radius: 9px;
+  margin: 7px 0;
+  background: hsl(var(--card));
+  overflow: hidden;
+}
+.doc-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  text-align: left;
+}
+.doc-card-head > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.doc-card-head strong {
+  font-size: 0.92rem;
+}
+.doc-card-head small {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-chevron {
+  width: 12px;
+}
+.doc-reason {
+  margin-left: auto;
+  color: hsl(var(--primary));
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.doc-card-body {
+  padding: 0 15px 15px;
+  border-top: 1px solid hsl(var(--border));
+}
+.doc-table-wrap {
+  overflow-x: auto;
+}
+.doc-shell table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.doc-shell th,
+.doc-shell td {
+  padding: 8px;
+  border-bottom: 1px solid hsl(var(--border));
+  text-align: left;
+  white-space: nowrap;
+}
+.doc-shell th {
+  color: hsl(var(--muted-foreground));
+  font-weight: 500;
+}
+.doc-package {
+  text-decoration: underline;
+  text-decoration-color: hsl(var(--primary));
+  text-underline-offset: 3px;
+}
+.doc-definition,
+.doc-kernel-note {
+  font-size: 0.82rem;
+  color: hsl(var(--muted-foreground));
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.doc-kernel-note {
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 10px;
+}
+.doc-cell-note {
+  display: block;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.72rem;
+}
+.doc-provider {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  max-width: 260px;
+}
+.doc-panel ul {
+  list-style: disc;
+  padding-left: 20px;
+}
+.doc-overlay {
+  position: fixed;
+  inset: 0;
+  background: #0009;
+  z-index: 30;
+}
+.doc-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(550px, 100vw);
+  overflow: auto;
+  z-index: 31;
+  background: hsl(var(--background));
+  border-left: 1px solid hsl(var(--border));
+  padding: 24px;
+  box-shadow: -10px 0 40px #0006;
+  font-size: 0.9rem;
+}
+.doc-panel h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 28px;
+}
+.doc-panel h3 {
+  font-size: 1rem;
+  font-weight: 650;
+  margin: 22px 0 8px;
+}
+.doc-panel p {
+  margin: 9px 0;
+}
+.doc-panel small {
+  color: hsl(var(--muted-foreground));
+}
+.doc-close {
+  float: right;
+  border: 1px solid hsl(var(--border));
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+.doc-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  padding: 10px;
+  margin: 18px 0;
+}
+.doc-versions > span,
+.doc-versions > button {
+  flex: 1;
+  min-width: 115px;
+  overflow-wrap: anywhere;
+  padding: 8px;
+}
+.doc-versions > button {
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  text-align: left;
+  cursor: pointer;
+}
+.doc-versions > button[aria-pressed="true"] {
+  background: hsl(var(--secondary));
+  border-color: hsl(var(--foreground));
+  font-weight: 600;
+}
+.doc-versions > button:focus-visible {
+  outline: 2px solid hsl(var(--foreground));
+  outline-offset: 2px;
+}
+.doc-log {
+  border-bottom: 1px solid hsl(var(--border));
+  padding: 10px 0;
+}
+.doc-changelog-range {
+  color: hsl(var(--muted-foreground));
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+.doc-log pre {
+  white-space: pre-wrap;
+  font-family: inherit;
+  margin: 5px 0;
+}
+.doc-warning-text {
+  color: #d2a24f;
+}
+@media (max-width: 650px) {
+  .doc-shell {
+    padding: 15px 10px 60px;
+  }
+  .doc-top {
+    display: block;
+  }
+  .doc-toolbar {
+    gap: 7px;
+  }
+  .doc-toolbar label,
+  .doc-toolbar select {
+    flex: 1;
+    min-width: 140px;
+  }
+  .doc-reason {
+    white-space: normal;
+    text-align: right;
+    max-width: 100px;
+  }
+  .doc-panel {
+    padding: 16px;
+  }
+}
+.doc-shell {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.doc-card,
+.doc-card-body,
+.doc-table-wrap {
+  min-width: 0;
+}
+.doc-count {
+  overflow-wrap: anywhere;
+}
