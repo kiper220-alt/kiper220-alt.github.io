@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Python data preparation
+__pycache__/
+*.pyc
+
+# Local archive of the working changes
+/site-changes.tar.gz
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
