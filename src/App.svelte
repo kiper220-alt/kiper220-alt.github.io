@@ -2,6 +2,10 @@
     import {ModeWatcher} from "mode-watcher";
     import { branchSettingsFromList, changeBranches, changeTab, listFromBranchSettings, setDndSort, setGroups, settings } from "./components/settings";
     import TabbedPackageTable from "./components/TabbedPackageTable.svelte";
+    import DocMode from "./doc/DocMode.svelte";
+    import './doc/doc.css';
+
+    let view = $state<'branches' | 'components'>('branches');
 
     let branches = $state(branchSettingsFromList(settings.branches));
     let groups = $state(settings.groups);
@@ -23,4 +27,9 @@
 </script>
 
 <ModeWatcher/>
-<TabbedPackageTable bind:packages={groups} bind:branches={branches} bind:dndSort={dndSort} bind:tab={currentTab}/>
+<nav class="site-modes" aria-label="Режим сайта"><button class:active={view === 'branches'} onclick={() => view = 'branches'}>Сравнение веток</button><button class:active={view === 'components'} onclick={() => view = 'components'}>Компоненты и пакеты</button></nav>
+{#if view === 'branches'}
+    <TabbedPackageTable bind:packages={groups} bind:branches={branches} bind:dndSort={dndSort} bind:tab={currentTab}/>
+{:else}
+    <DocMode/>
+{/if}

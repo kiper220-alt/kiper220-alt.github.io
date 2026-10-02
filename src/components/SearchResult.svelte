@@ -1,6 +1,6 @@
 <script lang="ts">
     import {Skeleton} from "$lib/components/ui/skeleton/index.js";
-    import * as search from "./search.ts";
+    import * as search from "./search";
     import {Badge} from "$lib/components/ui/badge/index.js";
     import {cn} from "$lib/utils";
     import Trash from "@lucide/svelte/icons/trash";
@@ -59,7 +59,7 @@
     // Эффект для дебаунсинга поиска
     $effect(() => {
         const fix = prompt;
-        let timer: number = setTimeout(() => findPackage(fix), 1000);
+        let timer: ReturnType<typeof setTimeout> = setTimeout(() => findPackage(fix), 1000);
 
         // Очистка при уничтожении компонента
         return () => {
@@ -108,7 +108,7 @@
                     role="option"
                     aria-selected="false"
                     tabindex="0"
-                    onclick={() => addPackage(pkg.name, pkg.deleted)}
+                    onclick={() => pkg.name && addPackage(pkg.name, pkg.deleted ?? false)}
                     aria-label={`Package ${pkg.name}, version ${pkg.version}`}
             >
                 <div class="font-semibold text-sm select-none flex flex-row">
