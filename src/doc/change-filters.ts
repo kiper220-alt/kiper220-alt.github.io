@@ -6,7 +6,7 @@ export const changeFilters = [
   { value: 'included', label: 'Включены в компонент' },
   { value: 'excluded', label: 'Исключены из компонента' },
   { value: 'provider-changed', label: 'Сменился RPM-поставщик' },
-  { value: 'unchanged', label: 'unchanged' },
+  { value: 'unchanged', label: 'Без изменений' },
 ] as const;
 
 export type PackageChangeFilter = typeof changeFilters[number]['value'];
